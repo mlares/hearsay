@@ -27,9 +27,22 @@ class OrderedList:
         self.last = None
 
     def show(self):
+        state = ['awakening','doomsday','contact ','linedown']
         current = self.head
         while current is not None:
-            print(current.getData())
+
+            if current.getData()[2] is None:
+                print("%7.2f -- case %i (%8r) -- id: %i " %
+                        tuple([current.getData()[0],
+                            current.getData()[3], 
+                            state[current.getData()[3]-1], 
+                            current.getData()[1]]))
+            else:
+                print("%7.2f -- case %i -- %i -> %i" % tuple([current.getData()[0], current.getData()[3], current.getData()[1], current.getData()[2]]))
+
+#            print(current.getData())
+
+
             current = current.getNext()        
 
     def add(self, data):
@@ -70,6 +83,7 @@ class OrderedList:
 
 
 def ShowCETIs(CETIs):
+    print('\n\n')
     for i in range(len(CETIs)):
         print('%3d          (%5.0f, %5.0f) lyr  <%5.0f, %5.0f> yr' %
               CETIs[i][0][1:])
@@ -83,3 +97,6 @@ def ShowCETIs(CETIs):
                 np.array(CETIs[i][l+1][2:4]))**2).sum())
 
 # }}}
+
+# from importlib import reload
+# ceti_tools = reload(ceti_tools)

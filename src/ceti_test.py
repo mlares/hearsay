@@ -9,14 +9,30 @@ import sys
 import pickle
 import ceti_tools as ct
 
+# para recargar el modulo si se hacen modificaciones:
+from importlib import reload
+ceti_tools = reload(ceti_tools)
+
+# para guardar la salida
+from io import StringIO
+import sys
+
 # DEBUGING
 # import pdb; pdb.set_trace()
+
+# CASES:
+# 1 - awakening
+# 2 - doomsday
+# 3 - contact
+# 4 - linedown
+
 
 random.seed(420)
 np.random.seed(420)
 
 message = "PRESS%ENTER%TO%CONTINUE"
-message = "\n"+message*4+"\n"
+message = "~~~~~~~~~~~~~~~~~~~~~~~"
+message = "\n"+message*3+"\n"
 
 # FIXED AND SIMULATION VARIABLES
 # {{{
@@ -78,12 +94,18 @@ except NameError:
 next_event = [0., 0, None, 1]
 t_forthcoming.add(next_event)
 
+
+old_stdout = sys.stdout
+result = StringIO()
+sys.stdout = result
+
+
 # SIMULATION LOOP OVER TIME
 while (t_now < t_max):
 
     t_now, ID_emit, ID_hear, case = t_forthcoming.head.getData()
 
-    wait = input(message)
+    #wait = input(message)
     print('[ case:%d | id:%d ]      <<< t = %f >>>' % (case, ID_emit, t_now))
     print('\n active CETIs', CHATs_idx)
     print(' ')
@@ -260,5 +282,18 @@ while (t_now < t_max):
     if t_forthcoming.size() < 1:
         break
 
-    # ShowCETIs(CETIs)
-    # raw_input()
+
+print('\n\n')
+ct.ShowCETIs(CETIs)
+
+
+sys.stdout = old_stdout
+result_string = result.getvalue()
+
+i = input('experiment code: ').zfill(3)
+fname = 'experiment_' + i + '.dat'
+
+savef = open(fname,'w')
+savef.write(result_string)
+savef.close()
+

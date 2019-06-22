@@ -27,18 +27,21 @@ class OrderedList:
         self.last = None
 
     def show(self):
-        state = ['awakening','doomsday','contact ','linedown']
+        state = ['awakening','doomsday','contact ','blackout']
         current = self.head
         while current is not None:
 
             if current.getData()[2] is None:
-                print("%7.2f -- case %i (%8r) -- id: %i " %
+                print("   %6.2f  %14s - %i " %
                         tuple([current.getData()[0],
-                            current.getData()[3], 
                             state[current.getData()[3]-1], 
                             current.getData()[1]]))
             else:
-                print("%7.2f -- case %i -- %i -> %i" % tuple([current.getData()[0], current.getData()[3], current.getData()[1], current.getData()[2]]))
+                print("   %6.2f  %14s - %i ---> %i" % 
+                        tuple([current.getData()[0], 
+                            state[current.getData()[3]-1], 
+                            current.getData()[1], 
+                            current.getData()[2]]))
 
 #            print(current.getData())
 
@@ -83,14 +86,26 @@ class OrderedList:
 
 
 def ShowCETIs(CETIs):
-    print('\n\n')
     for i in range(len(CETIs)):
-        print('%3d          (%5.0f, %5.0f) lyr  <%5.0f, %5.0f> yr' %
-              CETIs[i][0][1:])
+        print('%2d         (%5.0f, %5.0f) yr      <%5.0f, %5.0f> lyr' %
+                 (CETIs[i][0][1],
+                  CETIs[i][0][4],
+                  CETIs[i][0][5],
+                  CETIs[i][0][2],
+                  CETIs[i][0][3])
+                  )
+
+
         k = len(CETIs[i]) - 1
         for l in range(k):
-            print('%3d sees %3d (%5.0f, %5.0f) lyr  <%5.0f, %5.0f> yr' %
-                  CETIs[i][l+1])
+            print('%2d sees %2d (%5.0f, %5.0f) yr      <%5.0f, %5.0f> lyr' %
+                  (CETIs[i][l+1][0],
+                  CETIs[i][l+1][1],
+                  CETIs[i][l+1][4],
+                  CETIs[i][l+1][5],
+                  CETIs[i][l+1][2],
+                  CETIs[i][l+1][3])
+                  )
 
             Dx = np.sqrt(((
                 np.array(CETIs[i][0][2:4]) - 

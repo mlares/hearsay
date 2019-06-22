@@ -15,7 +15,6 @@ ceti_tools = reload(ceti_tools)
 
 # para guardar la salida
 from io import StringIO
-import sys
 
 # DEBUGING
 # import pdb; pdb.set_trace()
@@ -26,13 +25,13 @@ import sys
 # 3 - contact
 # 4 - linedown
 
-
 random.seed(420)
 np.random.seed(420)
 
 message = "PRESS%ENTER%TO%CONTINUE"
 message = "~~~~~~~~~~~~~~~~~~~~~~~"
 message = "\n"+message*3+"\n"
+message = ""
 
 # FIXED AND SIMULATION VARIABLES
 # {{{
@@ -58,6 +57,9 @@ D_max = 3000.
 
 # maximo tiempo para simular
 t_max = 3000.
+
+# flag to set interactive session
+interactive = False
 
 # }}}
 
@@ -95,9 +97,10 @@ next_event = [0., 0, None, 1]
 t_forthcoming.add(next_event)
 
 
-old_stdout = sys.stdout
-result = StringIO()
-sys.stdout = result
+if not interactive:
+    old_stdout = sys.stdout
+    result = StringIO()
+    sys.stdout = result
 
 
 # SIMULATION LOOP OVER TIME
@@ -105,10 +108,12 @@ while (t_now < t_max):
 
     t_now, ID_emit, ID_hear, case = t_forthcoming.head.getData()
 
-    #wait = input(message)
-    print('[ case:%d | id:%d ]      <<< t = %f >>>' % (case, ID_emit, t_now))
-    print('\n active CETIs', CHATs_idx)
-    print(' ')
+    if interactive: wait = input(message)
+
+    #print('<<< t = %f >>>' % t_now)
+
+    #print('[ case:%d | id:%d ]      <<< t = %f >>>' % (case, ID_emit, t_now))
+    print('   active CETIs', CHATs_idx)
     t_forthcoming.show()
 
     # sys.stdout.write("\rTime: %f  (max=%f)\n" % (t_now, t_max))
@@ -166,7 +171,7 @@ while (t_now < t_max):
             # traverse all CETIs within reach
             for k in idx:
 
-                print(k)
+                #print(k)
 
                 ID_old = CHATs_idx[k]
 
@@ -286,14 +291,14 @@ while (t_now < t_max):
 print('\n\n')
 ct.ShowCETIs(CETIs)
 
+if not interactive:
+    sys.stdout = old_stdout
+    result_string = result.getvalue()
 
-sys.stdout = old_stdout
-result_string = result.getvalue()
+    i = input('experiment code: ').zfill(3)
 
-i = input('experiment code: ').zfill(3)
-fname = 'experiment_' + i + '.dat'
-
-savef = open(fname,'w')
-savef.write(result_string)
-savef.close()
+    fname = 'experiment_' + i + '.dat'
+    savef = open(fname,'w')
+    savef.write(result_string)
+    savef.close()
 

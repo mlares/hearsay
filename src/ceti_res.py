@@ -46,7 +46,7 @@ inbox = []
 distancias = []
 hangon = []  # lapso de tiempo que esta escuchando
 
-for experiment in range(6250):
+for experiment in range(1250):
 
     filename = '../dat/CETIs_' + str(experiment+1).zfill(7) + '.dat'
     CETIs = pickle.load( open(filename, "rb") )

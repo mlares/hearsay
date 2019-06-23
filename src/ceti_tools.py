@@ -3,7 +3,6 @@ import numpy as np
 # Resources:
 # http://interactivepython.org/courselib/static/pythonds/BasicDS/ImplementinganOrderedList.html
 
-
 # NODE AND LINKED LIST CLASSES
 # {{{
 class Node:
@@ -100,5 +99,3 @@ def ShowCETIs(CETIs):
 
 # }}}
 
-# from importlib import reload
-# ceti_tools = reload(ceti_tools)

@@ -37,7 +37,7 @@ class OrderedList:
                             state[current.getData()[3]-1], 
                             current.getData()[1]]))
             else:
-                print("   %6.2f  %14s - %i ---> %i" % 
+                print("   %6.2f  %14s - %i <    %i" % 
                         tuple([current.getData()[0], 
                             state[current.getData()[3]-1], 
                             current.getData()[1], 
@@ -84,32 +84,19 @@ class OrderedList:
 # PERSONALIZED FUNCTIONS
 # {{{
 
-
 def ShowCETIs(CETIs):
     for i in range(len(CETIs)):
         print('%2d         (%5.0f, %5.0f) yr      <%5.0f, %5.0f> lyr' %
-                 (CETIs[i][0][1],
-                  CETIs[i][0][4],
-                  CETIs[i][0][5],
-                  CETIs[i][0][2],
-                  CETIs[i][0][3])
-                  )
-
+                 (CETIs[i][0][1], CETIs[i][0][4],
+                  CETIs[i][0][5], CETIs[i][0][2], CETIs[i][0][3]))
 
         k = len(CETIs[i]) - 1
         for l in range(k):
-            print('%2d sees %2d (%5.0f, %5.0f) yr      <%5.0f, %5.0f> lyr' %
-                  (CETIs[i][l+1][0],
-                  CETIs[i][l+1][1],
-                  CETIs[i][l+1][4],
-                  CETIs[i][l+1][5],
-                  CETIs[i][l+1][2],
-                  CETIs[i][l+1][3])
-                  )
-
             Dx = np.sqrt(((
                 np.array(CETIs[i][0][2:4]) - 
                 np.array(CETIs[i][l+1][2:4]))**2).sum())
+
+            print('%2d sees %2d (%5.0f, %5.0f) yr      <%5.0f, %5.0f> lyr distance=%f' % (CETIs[i][l+1][0], CETIs[i][l+1][1], CETIs[i][l+1][4], CETIs[i][l+1][5], CETIs[i][l+1][2], CETIs[i][l+1][3], Dx))
 
 # }}}
 

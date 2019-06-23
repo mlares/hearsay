@@ -11,7 +11,7 @@ import ceti_tools as ct
 
 # para recargar el modulo si se hacen modificaciones:
 from importlib import reload
-ceti_tools = reload(ceti_tools)
+ct = reload(ct)
 
 # para guardar la salida
 from io import StringIO
@@ -25,13 +25,14 @@ from io import StringIO
 # 3 - contact
 # 4 - linedown
 
-random.seed(420)
-np.random.seed(420)
+#random.seed(420)
+#np.random.seed(420)
 
 message = "PRESS%ENTER%TO%CONTINUE"
 message = "~~~~~~~~~~~~~~~~~~~~~~~"
 message = "\n"+message*3+"\n"
 message = ""
+state = ['awakening','doomsday','contact ','blackout']
 
 # FIXED AND SIMULATION VARIABLES
 # {{{
@@ -39,7 +40,7 @@ message = ""
 # PARAMETERS :::
 
 # radio interno de la zona galactica habitable, años luz
-GHZ_inner = 0.0
+GHZ_inner = 1000.0
 
 # radio interno de la zona galactica habitable, años luz
 GHZ_outer = 5000.0
@@ -53,10 +54,10 @@ tau_survive = 1000.
 
 # Maxima distancia, en años luz, a la cual una CETI puede
 # enviar o recibir mensajes
-D_max = 3000.
+D_max = 4000.
 
 # maximo tiempo para simular
-t_max = 3000.
+t_max = 15000.
 
 # flag to set interactive session
 interactive = False
@@ -110,11 +111,12 @@ while (t_now < t_max):
 
     if interactive: wait = input(message)
 
-    #print('<<< t = %f >>>' % t_now)
+    print('<<< t = %f >>> %10s of %3d' % (t_now, state[case-1], ID_emit))
 
     #print('[ case:%d | id:%d ]      <<< t = %f >>>' % (case, ID_emit, t_now))
-    print('   active CETIs', CHATs_idx)
-    t_forthcoming.show()
+    #print('   active CETIs', CHATs_idx)
+    print(CHATs_idx)
+    #t_forthcoming.show()
 
     # sys.stdout.write("\rTime: %f  (max=%f)\n" % (t_now, t_max))
     # sys.stdout.flush()
@@ -286,6 +288,11 @@ while (t_now < t_max):
     # salir si no queda nada para hacer:
     if t_forthcoming.size() < 1:
         break
+
+    t_forthcoming.show()
+    print(CHATs_idx)
+
+
 
 
 print('\n\n')

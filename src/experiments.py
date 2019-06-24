@@ -1,6 +1,6 @@
 # coding: utf-8
 
-from ceti_sim import ceti_experiment
+from ceti_exp import ceti_exp
 import pickle
 import numpy as np
 import pandas
@@ -45,14 +45,14 @@ for tau_awakening, tau_survive, D_max in itertools.product(tau_awakeningS, tau_s
 
    print(tau_awakening, tau_survive, D_max)
 
-   for experiment in range(50):
+   for experiment in range(200):
 
        i = i + 1
 
-       CETIs = ceti_experiment(GHZ_inner, GHZ_outer, 
+       CETIs = ceti_exp(GHZ_inner, GHZ_outer, 
                                tau_awakening, tau_survive, D_max, t_max)
 
-       filename = '../dat/CETIs_' + str(i).zfill(7) + '.dat'
+       filename = '../dat/CETIs_SKRU_' + str(i).zfill(7) + '.dat'
        df.loc[i] = [tau_awakening, tau_survive, D_max, filename]
 
        pickle.dump( CETIs, open( filename, "wb" ) )

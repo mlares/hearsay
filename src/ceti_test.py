@@ -234,10 +234,10 @@ tau_survive = 1000.
 
 # Maxima distancia, en años luz, a la cual una CETI puede
 # enviar o recibir mensajes
-D_max = 1000.
+D_max = 3000.
 
 # maximo tiempo para simular
-t_max = 1000.
+t_max = 5000.
 
 # flag to set interactive session
 interactive = True

@@ -19,17 +19,6 @@ GHZ_inner     = 20000.
 # radio interno de la zona galactica habitable, años luz
 GHZ_outer = 60000.  
 
-# tiempo medio, en años, que hay que esperar para que 
-# aparezca otra CETI en la galaxia
-tau_awakening = 5000.
-
-# Tiempo medio, en años, durante el cual una CETI esta activa
-tau_survive = 3000.   
-
-# Maxima distancia, en años luz, a la cual una CETI puede 
-# enviar o recibir mensajes
-D_max = 20000.   
-
 # maximo tiempo para simular
 t_max = 500000.
  
@@ -45,7 +34,7 @@ for tau_awakening, tau_survive, D_max in itertools.product(tau_awakeningS, tau_s
 
    print(tau_awakening, tau_survive, D_max)
 
-   for experiment in range(200):
+   for experiment in range(10):
 
        i = i + 1
 
@@ -58,3 +47,5 @@ for tau_awakening, tau_survive, D_max in itertools.product(tau_awakeningS, tau_s
        pickle.dump( CETIs, open( filename, "wb" ) )
 
 df.to_csv('../dat/experiment_params.csv')
+
+

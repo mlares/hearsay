@@ -46,6 +46,6 @@ for tau_awakening, tau_survive, D_max in itertools.product(tau_awakeningS, tau_s
 
        pickle.dump( CETIs, open( filename, "wb" ) )
 
-df.to_csv('../dat/experiment_params.csv')
+df.to_csv('../dat/experiment_params.csv', index=False)
 
 

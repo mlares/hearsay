@@ -2,7 +2,6 @@
 #
 # key:  A: Awakening, B: Blackout, C: Contact, D: Doomsday
 #
-#
 # CONTENTS OF THE <CETIS> PICKLE:
 # . . . . . . . . . . . . . . . . . . . . . . . .
 # 0. ID of emitting CETI
@@ -19,14 +18,12 @@
 # The time span of a CETI is t_D - t_A for CETIs[k][0]
 # The time span of a contact is t_B - t_C for CETIs[k][i], with i>0
 #
-#
 # age: time elapsed from A to a given time
 # ceti_e: ceti emitting signals (emiter)
 # ceti_r: ceti receiving signals (receiver)
 # ceti_c: ceti that listen at least another ceti (citizen)
 # ceti_h: ceti that is lestened by at least another ceti
 #
-
 # for Check purposes
 #-------------------
 # duration of a civilization (exponential distribution by costruction)
@@ -66,59 +63,93 @@
 
 # ... everything as a function of parameters!
 
-
- 
-
 ##########  PLOTS: dependencia de valores medios y parametros
-
-# 
-
 #----------------------------------------------------------------------
 
 import pickle
 import numpy as np
 from matplotlib import pyplot as plt
 import pandas
+import seaborn as sns
 
+# awaken = t_doomsday - t_Awakening de cada ceti
+# inbox = nro. de cetis que escucha cada ceti
+# firstc = tiempo de espera hasta el primer contacto
+# index = indice de la lista de parametros
+# 
+# waiting = tiempo de espera entre A y todos los C de una ceti
+# hangon = lapso de tiempo que dura la escucha (t_blackout - t_contact)
+# distancias = distancias entre cetis que alguna vez entraron en contacto
+
+def redux(D):
+
+    index = []
+    firstc = []
+    ncetis = []
+    awaken = []     # lapso de tiempo que esta activa
+    waiting = []    # lapso de tiempo que espera hasta el primer contacto
+    inbox = []      # cantidad de cetis que esta escuchando
+    distancias = [] # distancias a las cetis contactadas
+    hangon = []     # lapso de tiempo que esta escuchando otra CETI
+    N = len(D)
+
+    kcross = 0
+    
+    for filename in D['name']:        
+
+        CETIs = pickle.load( open(filename, "rb") )
+
+        M = len(CETIs)
+        ncetis.append(M)
+    
+        for i in range(M): # number of realizations
+    
+            k = len(CETIs[i]) # number of contacts
+            inbox.append(k)
+            awaken.append(CETIs[i][0][5] - CETIs[i][0][4])
+            index.append(kcross)
+
+            firstcontact = 1.e8
+
+            for l in range(1,k):
+                earlier = CETIs[i][l][4] - CETIs[i][0][4]
+                firstcontact = min(earlier, firstcontact)
+                Dx = np.sqrt(((
+                    np.array(CETIs[i][0][2:4]) - 
+                    np.array(CETIs[i][l][2:4]))**2).sum())
+
+                waiting.append(earlier)
+                distancias.append(Dx)
+                hangon.append(CETIs[i][l][5] - CETIs[i][l][4])
+    
+            firstc.append(firstcontact)
+
+        kcross+=1
+            
+    N = 12
+    count = [0]*N
+    for i in range(N):
+        count[i] = inbox.count(i)
+ 
+    return(awaken, inbox, distancias, hangon, waiting, count, index,
+            firstc, ncetis)
+
+                 
 D = pandas.read_csv('../dat/params_SKRU.csv')
-N = len(D)
+awaken, inbox, distancias, hangon, waiting, count, index, firstc, ncetis = redux(D)
 
-awaken = []     # lapso de tiempo que esta activa
-waiting = []    # lapso de tiempo que espera hasta el primer contacto
-inbox = []      # cantidad de cetis que esta escuchando
-distancias = [] # distancias a las cetis contactadas
-hangon = []     # lapso de tiempo que esta escuchando otra CETI
+l = [index, awaken, inbox, firstc, distancias, hangon, waiting, count, ncetis]
 
-for experiment in range(N):
+lens = []
+for i in l: 
+    lens.append(len(i))
 
-    filename = '../dat/CETIs_SKRU_' + str(experiment+1).zfill(7) + '.dat'
-    CETIs = pickle.load( open(filename, "rb") )
-
-    for i in range(len(CETIs)):
-
-        k = len(CETIs[i])
-        for l in range(1,k):
-            earlier = CETIs[i][l][4] - CETIs[i][0][4]
-            waiting.append(earlier)
-            Dx = np.sqrt(((
-                np.array(CETIs[i][0][2:4]) - 
-                np.array(CETIs[i][l][2:4]))**2).sum())
-            distancias.append(Dx)
-            hangon.append(CETIs[i][l][5] - CETIs[i][l][4])
-
-        inbox.append(k)
-        awaken.append(CETIs[i][0][5] - CETIs[i][0][4])
-
-N = 12
-count = [0]*N
-for i in range(N):
-   count[i] = inbox.count(i)
-
+ 
 
 
 # MAKE SOME PLOTS ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
-# awaken
+# awaken: distribution
 
 plt.hist(awaken, bins=50, color='teal')
 plt.rcParams['legend.fontsize'] = 20
@@ -136,7 +167,7 @@ plt.savefig('../plt/SKRU_awaken.pdf', format='pdf')
 
 
 
-# distancias
+# distancias: distribution
      
 plt.hist(distancias, bins=50, color='teal')
 plt.rcParams['legend.fontsize'] = 20
@@ -153,13 +184,8 @@ plt.tight_layout()
 plt.savefig('../plt/SKRU_distances.pdf', format='pdf') 
 
 
-# inbox
+# inbox: distribution
 
-N = 20
-count = [0]*N
-for i in range(N):
-   count[i] = inbox.count(i)
-                             
 plt.bar(range(N), count, color='teal')
  
 plt.rcParams['legend.fontsize'] = 40
@@ -178,18 +204,8 @@ plt.savefig('../plt/SKRU_inbox.pdf', format='pdf')
 
             
 
-l1 = D['tau_awakening'] == 1000.
-l2 = D['tau_awakening'] == 10500.
-l2 = D['tau_awakening'] == 20000.
-d1 = D[l1]
-d2 = D[l2]
-d3 = D[l3]
 
 
-
-
-
-#
 ## MAKE SOME PLOTS
 #
 #fig, axes = plt.subplots(2, 2, figsize=(8,8))
@@ -236,6 +252,102 @@ d3 = D[l3]
 #
 #plt.savefig('../plt/plot.pdf', format='pdf')
 
+ 
+##################################################################
+
+l1 = (D['tau_awakening'] == 1000.) & (D['tau_survive'] == 5050.) & (D['D_max'] == 10500.)
+l2 = (D['tau_awakening'] == 10500.) & (D['tau_survive'] == 5050.) & (D['D_max'] == 10500.)
+l3 = (D['tau_awakening'] == 20000.) & (D['tau_survive'] == 5050.) & (D['D_max'] == 10500.)
+d1 = D[l1]
+d2 = D[l2]
+d3 = D[l3]
+ 
+awaken1, inbox1, distancias1, hangon1, waiting1, count1 = redux(d1)
+awaken2, inbox2, distancias2, hangon2, waiting2, count2 = redux(d2)
+awaken3, inbox3, distancias3, hangon3, waiting3, count3 = redux(d3)
+
+sns.distplot(awaken1, hist = False, kde = True,
+             kde_kws = {'shade': True, 'linewidth': 3},
+             label='tau_a=1000')
+sns.distplot(awaken2, hist = False, kde = True,
+             kde_kws = {'shade': True, 'linewidth': 3},
+             label='tau_a=10500')
+sns.distplot(awaken3, hist = False, kde = True,
+             kde_kws = {'shade': True, 'linewidth': 3},
+             label='tau_a=20000')
+plt.show()
+
+##################################################################
+
+l1 = (D['tau_awakening'] == 1000.) & (D['tau_survive'] == 5050.) & (D['D_max'] == 10500.) 
+l2 = (D['tau_awakening'] == 10500.) & (D['tau_survive'] == 5050.) & (D['D_max'] == 10500.) 
+l3 = (D['tau_awakening'] == 20000.) & (D['tau_survive'] == 5050.) & (D['D_max'] == 10500.) 
+d1 = D[l1]
+d2 = D[l2]
+d3 = D[l3]
+ 
+awaken1, inbox1, distancias1, hangon1, waiting1, count1 = redux(d1)
+awaken2, inbox2, distancias2, hangon2, waiting2, count2 = redux(d2)
+awaken3, inbox3, distancias3, hangon3, waiting3, count3 = redux(d3)
+
+sns.distplot(distancias1, hist = False, kde = True,
+             kde_kws = {'shade': True, 'linewidth': 3},
+             label='tau_a=1000')
+sns.distplot(distancias2, hist = False, kde = True,
+             kde_kws = {'shade': True, 'linewidth': 3},
+             label='tau_a=10500')
+sns.distplot(distancias3, hist = False, kde = True,
+             kde_kws = {'shade': True, 'linewidth': 3},
+             label='tau_a=20000')
+plt.show()
+ 
+
+##################################################################
+
+l1 = (D['tau_awakening'] == 1000.) & (D['tau_survive'] == 5050.) & (D['D_max'] == 10500.) 
+l2 = (D['tau_awakening'] == 10500.) & (D['tau_survive'] == 5050.) & (D['D_max'] == 10500.) 
+l3 = (D['tau_awakening'] == 20000.) & (D['tau_survive'] == 5050.) & (D['D_max'] == 10500.) 
+d1 = D[l1]
+d2 = D[l2]
+d3 = D[l3]
+ 
+awaken1, inbox1, distancias1, hangon1, waiting1, count1 = redux(d1)
+awaken2, inbox2, distancias2, hangon2, waiting2, count2 = redux(d2)
+awaken3, inbox3, distancias3, hangon3, waiting3, count3 = redux(d3)
+
+sns.distplot(waiting1, hist = False, kde = True,
+             kde_kws = {'shade': True, 'linewidth': 3},
+             label='tau_a=1000')
+sns.distplot(waiting2, hist = False, kde = True,
+             kde_kws = {'shade': True, 'linewidth': 3},
+             label='tau_a=10500')
+sns.distplot(waiting3, hist = False, kde = True,
+             kde_kws = {'shade': True, 'linewidth': 3},
+             label='tau_a=20000')
+plt.show()
+ 
+
+
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -249,6 +361,6 @@ d3 = D[l3]
 
 # Analysis
 
-# D.groupby('tau_awakening').mean()
+D.groupby('tau_awakening').mean()
 
 # https://jakevdp.github.io/PythonDataScienceHandbook/03.08-aggregation-and-grouping.html

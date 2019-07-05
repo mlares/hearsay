@@ -255,16 +255,17 @@ plt.savefig('../plt/SKRU_inbox.pdf', format='pdf')
  
 ##################################################################
 
-l1 = (D['tau_awakening'] == 1000.) & (D['tau_survive'] == 5050.) & (D['D_max'] == 10500.)
+l1 = (D['tau_awakening'] == 1000.)  & (D['tau_survive'] == 5050.) & (D['D_max'] == 10500.)
 l2 = (D['tau_awakening'] == 10500.) & (D['tau_survive'] == 5050.) & (D['D_max'] == 10500.)
 l3 = (D['tau_awakening'] == 20000.) & (D['tau_survive'] == 5050.) & (D['D_max'] == 10500.)
 d1 = D[l1]
 d2 = D[l2]
 d3 = D[l3]
  
-awaken1, inbox1, distancias1, hangon1, waiting1, count1 = redux(d1)
-awaken2, inbox2, distancias2, hangon2, waiting2, count2 = redux(d2)
-awaken3, inbox3, distancias3, hangon3, waiting3, count3 = redux(d3)
+awaken1, inbox1, distancias1, hangon1, waiting1, count1, index1, firstc1, ncetis1 = redux(d1)
+awaken2, inbox2, distancias2, hangon2, waiting2, count2, index2, firstc2, ncetis2 = redux(d2)
+awaken3, inbox3, distancias3, hangon3, waiting3, count3, index3, firstc3, ncetis3 = redux(d3)
+
 
 sns.distplot(awaken1, hist = False, kde = True,
              kde_kws = {'shade': True, 'linewidth': 3},
@@ -279,16 +280,16 @@ plt.show()
 
 ##################################################################
 
-l1 = (D['tau_awakening'] == 1000.) & (D['tau_survive'] == 5050.) & (D['D_max'] == 10500.) 
+l1 = (D['tau_awakening'] == 1000.)  & (D['tau_survive'] == 5050.) & (D['D_max'] == 10500.) 
 l2 = (D['tau_awakening'] == 10500.) & (D['tau_survive'] == 5050.) & (D['D_max'] == 10500.) 
 l3 = (D['tau_awakening'] == 20000.) & (D['tau_survive'] == 5050.) & (D['D_max'] == 10500.) 
 d1 = D[l1]
 d2 = D[l2]
 d3 = D[l3]
  
-awaken1, inbox1, distancias1, hangon1, waiting1, count1 = redux(d1)
-awaken2, inbox2, distancias2, hangon2, waiting2, count2 = redux(d2)
-awaken3, inbox3, distancias3, hangon3, waiting3, count3 = redux(d3)
+awaken1, inbox1, distancias1, hangon1, waiting1, count1, index1, firstc1, ncetis1 = redux(d1)
+awaken2, inbox2, distancias2, hangon2, waiting2, count2, index2, firstc2, ncetis2 = redux(d2)
+awaken3, inbox3, distancias3, hangon3, waiting3, count3, index3, firstc3, ncetis3 = redux(d3)
 
 sns.distplot(distancias1, hist = False, kde = True,
              kde_kws = {'shade': True, 'linewidth': 3},
@@ -304,16 +305,16 @@ plt.show()
 
 ##################################################################
 
-l1 = (D['tau_awakening'] == 1000.) & (D['tau_survive'] == 5050.) & (D['D_max'] == 10500.) 
+l1 = (D['tau_awakening'] == 1000.)  & (D['tau_survive'] == 5050.) & (D['D_max'] == 10500.) 
 l2 = (D['tau_awakening'] == 10500.) & (D['tau_survive'] == 5050.) & (D['D_max'] == 10500.) 
 l3 = (D['tau_awakening'] == 20000.) & (D['tau_survive'] == 5050.) & (D['D_max'] == 10500.) 
 d1 = D[l1]
 d2 = D[l2]
 d3 = D[l3]
  
-awaken1, inbox1, distancias1, hangon1, waiting1, count1 = redux(d1)
-awaken2, inbox2, distancias2, hangon2, waiting2, count2 = redux(d2)
-awaken3, inbox3, distancias3, hangon3, waiting3, count3 = redux(d3)
+awaken1, inbox1, distancias1, hangon1, waiting1, count1, index1, firstc1, ncetis1 = redux(d1)
+awaken2, inbox2, distancias2, hangon2, waiting2, count2, index2, firstc2, ncetis2 = redux(d2)
+awaken3, inbox3, distancias3, hangon3, waiting3, count3, index3, firstc3, ncetis3 = redux(d3)
 
 sns.distplot(waiting1, hist = False, kde = True,
              kde_kws = {'shade': True, 'linewidth': 3},

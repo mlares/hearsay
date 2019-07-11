@@ -135,7 +135,7 @@ def redux(D):
             firstc, ncetis)
 
                  
-D = pandas.read_csv('../dat/params_SKRU.csv')
+D = pandas.read_csv('../dat/SKRU_01/params.csv')
 awaken, inbox, distancias, hangon, waiting, count, index, firstc, ncetis = redux(D)
 
 l = [index, awaken, inbox, firstc, distancias, hangon, waiting, count, ncetis]

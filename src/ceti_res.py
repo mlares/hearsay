@@ -103,6 +103,24 @@ D = pandas.read_csv('../dat/SKRU_01/params.csv')
 #--------------------------------------------------------
 
 
+# samples:
+l1s = (D['tau_awakening']<15000) & (D['tau_survive']<15000) & (D['D_max']<=5000.)
+l2s = (D['tau_awakening']>20000) & (D['tau_survive']>50000) & (D['D_max']<=5000.)
+l3s = (D['tau_awakening']<5000) & (D['tau_survive']>15000) & (D['D_max']<=5000.)
+l4s = (D['tau_awakening']>15000) & (D['tau_survive']<26000) & (D['D_max']<=5000.)
+# 800, 1050, 1350, 1200
+
+l1l = (D['tau_awakening']<15000) & (D['tau_survive']<15000) & (D['D_max']>=20000.)
+l2l = (D['tau_awakening']>20000) & (D['tau_survive']>50000) & (D['D_max']>=20000.)
+l3l = (D['tau_awakening']<5000) & (D['tau_survive']>15000) & (D['D_max']>=20000.)
+l4l = (D['tau_awakening']>15000) & (D['tau_survive']<26000) & (D['D_max']>=20000.)
+# 1600, 2100, 2721, 2400
+
+
+
+
+
+
 
 # Distribucion del numero de contactos
 
@@ -110,22 +128,100 @@ bins = np.arange(-1,12)+0.5
 A = D['tau_awakening'].unique()
 S = D['tau_survive'].unique()
                                                       
-l = (D['tau_awakening']==A[0]) & (D['tau_survive']==S[5]) & (D['D_max']==5000.)
-d = D[l]
+
+d = D[l1s]
 awaken, inbox, distancias, hangon, waiting, count, index, firstc, ncetis, x, y = redux(d) 
 plt.hist(inbox, bins=bins, histtype='step', align='mid', color='teal',
-        label='Dmax=40000')
+        label='l1s', linewidth=2)
 
-l = (D['tau_awakening']==A[0]) & (D['tau_survive']==S[5]) & (D['D_max']==10000.)
-d = D[l]
+d = D[l2s]
 awaken, inbox, distancias, hangon, waiting, count, index, firstc, ncetis, x, y = redux(d) 
-
 plt.hist(inbox, bins=bins, histtype='step', align='mid',color='slateblue',
-        label='Dmax=10000')
+        label='l2s', linewidth=2)
+
+d = D[l3s]
+awaken, inbox, distancias, hangon, waiting, count, index, firstc, ncetis, x, y = redux(d) 
+plt.hist(inbox, bins=bins, histtype='step', align='mid',color='slateblue',
+        label='l3s', linewidth=2)
+
+d = D[l4s]
+awaken, inbox, distancias, hangon, waiting, count, index, firstc, ncetis, x, y = redux(d) 
+plt.hist(inbox, bins=bins, histtype='step', align='mid',color='slateblue',
+        label='l4s', linewidth=2)
 
 plt.xticks(np.arange(0, 12, 2))
 plt.legend()
 plt.show()
+
+
+
+
+
+
+d = D[l1l]
+awaken, inbox1, distancias, hangon, waiting, count, index, firstc, ncetis, x, y = redux(d)
+d = D[l2l]
+awaken, inbox2, distancias, hangon, waiting, count, index, firstc, ncetis, x, y = redux(d)
+d = D[l3l]
+awaken, inbox3, distancias, hangon, waiting, count, index, firstc, ncetis, x, y = redux(d) 
+d = D[l4l]
+awaken, inbox4, distancias, hangon, waiting, count, index, firstc, ncetis, x, y = redux(d) 
+
+plt.hist(inbox1, bins=bins, histtype='step', align='mid', color='teal',
+        label='l1s', linewidth=2, density=True)
+plt.hist(inbox2, bins=bins, histtype='step', align='mid',color='slateblue',
+        label='l2s', linewidth=2, density=True)
+plt.hist(inbox3, bins=bins, histtype='step', align='mid',color='firebrick',
+        label='l3s', linewidth=2, density=True)
+plt.hist(inbox4, bins=bins, histtype='step', align='mid',color='tomato',
+        label='l4s', linewidth=2, density=True)
+
+plt.xticks(np.arange(0, 12, 2))
+plt.yscale('log')
+plt.legend()
+plt.show()
+          
+
+PROBAR CON LA ACUMULADA (R:ECDF)
+
+
+
+
+
+
+
+
+
+
+
+
+bins = np.arange(0, 150000, 5000)
+
+l = (D['tau_awakening']==A[0]) & (D['tau_survive']==S[10]) & (D['D_max']<=5000.)
+d = D[l]
+awaken, inbox, distancias, hangon, waiting, count, index, firstc, ncetis, x, y = redux(d) 
+plt.hist(firstc, bins=bins, histtype='step', align='mid', color='teal',
+        label='Dmax=40000', linewidth=2)
+
+l = (D['tau_awakening']==A[0]) & (D['tau_survive']==S[10]) & (D['D_max']<=20000.)
+d = D[l]
+awaken, inbox, distancias, hangon, waiting, count, index, firstc, ncetis, x, y = redux(d) 
+
+plt.hist(firstc, bins=bins, histtype='step', align='mid',color='crimson',
+        label='Dmax=10000', linewidth=2)
+
+#plt.xticks(np.arange(0, 12, 2))
+plt.legend()
+plt.yscale('log')
+plt.show()
+ 
+
+
+
+
+
+
+
 
 
 

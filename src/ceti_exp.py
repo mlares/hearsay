@@ -8,8 +8,8 @@ def ceti_exp(GHZ_inner, GHZ_outer, tau_awakening, tau_survive, D_max, t_max):
     from scipy import spatial as sp
     import ceti_tools as ct
 
-    random.seed(420)
-    np.random.seed(420)
+    random.seed()
+    np.random.seed()
 
     # lista de CETIs alguna vez activas
     CETIs = dict()

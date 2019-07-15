@@ -5,7 +5,7 @@ import pickle
 import numpy as np
 import pandas
 import itertools
-from os import makedirs
+from os import makedirs, path
 
 
 # PARAMETERS :::
@@ -16,17 +16,17 @@ GHZ_inner = 20000.
 GHZ_outer = 60000.  
 
 # maximo tiempo para simular
-t_max = 700000.
+t_max = 1.e6
 
 # experiment ID
 exp_ID = 'SKRU_01'
  
-tau_awakeningS = np.linspace(0, 24000, 12)[1:]
-tau_surviveS =   np.linspace(0, 50000, 12)[1:]
+tau_awakeningS = np.linspace(0, 24000, 16)[1:]
+tau_surviveS = np.linspace(0, 100000, 16, endpoint=False)[1:]
 
 # Separate data in directories according to D_max
 #D_maxS = np.linspace(0, 40000, 11)[1::2]
-D_maxS = [1000., 5000., 10000, 20000., 40000.]
+D_maxS = [1000., 10000., 20000., 40000]
 
 try:
     dirName = '../dat/'+exp_ID+''
@@ -50,13 +50,16 @@ for tau_awakening, tau_survive, D_max in itertools.product(tau_awakeningS, tau_s
    e = (GHZ_inner, GHZ_outer,tau_awakening, tau_survive, D_max, t_max)
    print(tau_awakening, tau_survive, D_max)
    k+=1; i=0 
-   for experiment in range(30):
+   for experiment in range(50):
 
        i+=1; l+=1
 
-       CETIs = ceti_exp(*e)
        dirName = '../dat/'+exp_ID + '/D' +str(int(D_max))+'/'
        filename = dirName + str(k).zfill(5) + '_' + str(i).zfill(3) + '.dat'
+       if(path.isfile(filename)): continue
+       
+
+       CETIs = ceti_exp(*e)
        df.loc[l] = [tau_awakening, tau_survive, D_max, filename]
 
        pickle.dump( CETIs, open( filename, "wb" ) )

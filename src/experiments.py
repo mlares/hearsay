@@ -19,10 +19,10 @@ GHZ_outer = 60000.
 t_max = 1.e6
 
 # experiment ID
-exp_ID = 'SKRU_01'
+exp_ID = 'SKRU_02'
  
-tau_awakeningS = np.linspace(0, 24000, 16)[1:]
-tau_surviveS = np.linspace(0, 100000, 16, endpoint=False)[1:]
+tau_awakeningS = np.linspace(0, 11000, 12)[1:]
+tau_surviveS = np.linspace(0, 11000, 12)[1:]
 
 # Separate data in directories according to D_max
 #D_maxS = np.linspace(0, 40000, 11)[1::2]

@@ -19,14 +19,14 @@ GHZ_outer = 60000.
 t_max = 1.e6
 
 # experiment ID
-exp_ID = 'SKRU_02'
+exp_ID = 'SKRU_03'
  
-tau_awakeningS = np.linspace(0, 11000, 12)[1:]
-tau_surviveS = np.linspace(0, 11000, 12)[1:]
+tau_awakeningS = np.linspace(0, 100000, 51)[1:]
+tau_surviveS = np.linspace(0, 500000, 51)[1:]
 
 # Separate data in directories according to D_max
 #D_maxS = np.linspace(0, 40000, 11)[1::2]
-D_maxS = [1000., 10000., 20000., 40000]
+D_maxS = [500, 1000., 10000., 20000., 40000, 80000]
 
 try:
     dirName = '../dat/'+exp_ID+''
@@ -58,9 +58,10 @@ for tau_awakening, tau_survive, D_max in itertools.product(tau_awakeningS, tau_s
        filename = dirName + str(k).zfill(5) + '_' + str(i).zfill(3) + '.dat'
        if(path.isfile(filename)): continue
        
+       #CETIs = ceti_exp(*e)
+       #df.loc[l] = [tau_awakening, tau_survive, D_max, filename]
 
-       CETIs = ceti_exp(*e)
-       df.loc[l] = [tau_awakening, tau_survive, D_max, filename]
+       CETIs = l
 
        pickle.dump( CETIs, open( filename, "wb" ) )
 

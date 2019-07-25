@@ -433,6 +433,9 @@ y = np.array(y)
 #plt.scatter(x[l3],y[l3],color='forestgreen',alpha=0.2, s=1)
 #plt.show()
 
+x = np.array(x)
+y = np.array(y)
+
 dist0 = np.sqrt(x[l0]**2 + y[l0]**2)
 dist1 = np.sqrt(x[l1]**2 + y[l1]**2)
 dist2 = np.sqrt(x[l2]**2 + y[l2]**2)

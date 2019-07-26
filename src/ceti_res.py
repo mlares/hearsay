@@ -65,7 +65,21 @@ def redux(D):
             firstc, ncetis, x, y)
 #===============================================================================
     
-D = pandas.read_csv('../dat/SKRU_01/params.csv')
+
+
+#)))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))
+D = pandas.read_csv('../dat/SKRU_08/params.csv')
+
+l1 = (D['tau_awakening']<37000) & (D['tau_survive']<60000) & (D['D_max']==50000.)
+l2 = (D['tau_awakening']>85000) & (D['tau_survive']>450000) & (D['D_max']==50000.)
+l3 = (D['tau_awakening']<37000) & (D['tau_survive']>450000) & (D['D_max']==50000.)
+l4 = (D['tau_awakening']>85000) & (D['tau_survive']<60000) & (D['D_max']==50000.)
+#)))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))
+
+
+
+
+
 
 #lens = []
 #for i in list(redux(D)): 
@@ -134,13 +148,13 @@ A = D['tau_awakening'].unique()
 S = D['tau_survive'].unique()
                                                       
 
-d = D[l1s]
+d = D[l1]
 awaken,inbox1s,distancias,hangon,waiting,count, index, firstc, ncetis, x, y = redux(d) 
-d = D[l2s]
+d = D[l2]
 awaken,inbox2s,distancias,hangon,waiting,count, index, firstc, ncetis, x, y = redux(d) 
-d = D[l3s]
+d = D[l3]
 awaken,inbox3s,distancias,hangon,waiting,count, index, firstc, ncetis, x, y = redux(d) 
-d = D[l4s]
+d = D[l4]
 awaken,inbox4s,distancias,hangon,waiting,count, index, firstc, ncetis, x, y = redux(d) 
 
 
@@ -159,13 +173,13 @@ plt.show()
 
 #################################################### DIFERENCIAL
 
-d = D[l1l]
+d = D[l1]
 awaken,inbox1,distancias,hangon,waiting,count,index,firstc1,ncetis,x,y = redux(d)
-d = D[l2l]
+d = D[l2]
 awaken,inbox2,distancias,hangon,waiting,count,index,firstc2,ncetis,x,y = redux(d)
-d = D[l3l]
+d = D[l3]
 awaken,inbox3,distancias,hangon,waiting,count,index,firstc3,ncetis,x,y = redux(d) 
-d = D[l4l]
+d = D[l4]
 awaken,inbox4,distancias,hangon,waiting,count,index,firstc4,ncetis,x,y = redux(d) 
 
 plt.hist(inbox1, bins=bins, histtype='step', align='mid', color='teal',
@@ -192,14 +206,10 @@ ecdf4 = ECDF(inbox4)
 
 
 #=========================================================  ACUMULADA, Fig. 1
-plt.plot(ecdf1.x+1, ecdf1.y, label='dense awakening, short lifetime ', line
-width=1, color='teal')
-plt.plot(ecdf2.x+1, ecdf2.y, label='sparse awakening, long lifetime ', line
-width=2, color='slateblue',linestyle='--')
-plt.plot(ecdf3.x+1, ecdf3.y, label='dense awakening, long lifetime  ', line
-width=2, color='firebrick') 
-plt.plot(ecdf4.x+1, ecdf4.y, label='sparse awakening, short lifetime', line
-width=1, color='tomato', linestyle='--')
+plt.plot(ecdf1.x+1, ecdf1.y, label='dense awakening, short lifetime ', linewidth=1, color='teal')
+plt.plot(ecdf2.x+1, ecdf2.y, label='sparse awakening, long lifetime ', linewidth=2, color='slateblue',linestyle='--')
+plt.plot(ecdf3.x+1, ecdf3.y, label='dense awakening, long lifetime  ', linewidth=2, color='firebrick') 
+plt.plot(ecdf4.x+1, ecdf4.y, label='sparse awakening, short lifetime', linewidth=1, color='tomato', linestyle='--')
  
 plt.xlim(1,120)
 plt.xscale('log') 
@@ -249,7 +259,9 @@ import matplotlib.cm as cm
 
 #==================================================================Fig.
 ### RATE OF NO CONTACT VS. TAU_A AND TAU_S
-D = pandas.read_csv('../dat/SKRU_01/params.csv')
+
+from mpl_toolkits.axes_grid1 import make_axes_locatable
+
 
 A = D['tau_awakening'].unique()
 A.sort()
@@ -269,12 +281,11 @@ m=np.zeros((N1,N2))
            
 for i, a in enumerate(A):
     for j, s in enumerate(S):
-        l = (D['tau_awakening']==a) & (D['tau_survive']==s) & (D['D_max']==40000.)
+        l = (D['tau_awakening']==a) & (D['tau_survive']==s) & (D['D_max']==50000.)
         d = D[l]
         awaken, inbox, distancias, hangon, waiting, count, index, firstc, ncetis, x, y = redux(d)
         m[i][j] = inbox.count(0)/max(len(inbox), 1)
 m = np.transpose(m)
-from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 
 fig, ax = plt.subplots()
@@ -299,16 +310,20 @@ plt.show()
 ### RATE OF FIRST CONTACT AT AWAKENING VS. TAU_A AND TAU_S
 # de todas las cetis que hicieron contacto alguna vez, cuales lo hicieron en el awakening
 
-D = pandas.read_csv('../dat/SKRU_01/params.csv')
+from scipy import ndimage
+
+
 
 A = D['tau_awakening'].unique()
 A.sort()
+A = A/1000.
 dA = (A[1:len(A)]-A[0:(len(A)-1)]).mean()
 Amin = A[0]-dA/2.
 Amax = A[-1]+dA/2.
 
 S = D['tau_survive'].unique()
 S.sort()
+S = S/1000.
 dS = (S[1:len(S)]-S[0:(len(S)-1)]).mean()
 Smin = S[0]-dS/2.
 Smax = S[-1]+dS/2.
@@ -319,19 +334,34 @@ m2=np.zeros((N1,N2))
 
 for i, a in enumerate(A):
     for j, s in enumerate(S):
-        l = (D['tau_awakening']==a) & (D['tau_survive']==s) & (D['D_max']==10000.)
+        l = (D['tau_awakening']==a) & (D['tau_survive']==s) & (D['D_max']==50000.)
         d = D[l]
         awaken, inbox, distancias, hangon, waiting, count, index, firstc, ncetis, x, y = redux(d)
         m2[i][j] = firstc.count(0.)/max(len(firstc),1)
 
-m2 = np.transpose(m)
-from mpl_toolkits.axes_grid1 import make_axes_locatable
+m2t = np.transpose(m2)
+
+
+sigma=[2,2]
+m2t_smoothed=ndimage.filters.gaussian_filter(m2t, sigma)
+m2_smoothed=ndimage.filters.gaussian_filter(m2, sigma)
+
+levels = list(np.arange(np.min(m2), np.max(m2), (np.max(m2)-np.min(m2))/20 ))
+
+# algoritmos de interpolacion:
+#https://stackoverflow.com/questions/34230108/smoothing-imshow-plot-with-matplotlib
 
 
 fig, ax = plt.subplots()
-im = ax.imshow(m2, interpolation='nearest', 
-        extent=[Amin,Amax,Smin,Smax], cmap=cm.viridis,
-        origin='lower', aspect='auto')
+im = ax.imshow(m2, extent=[Amin,Amax,Smin,Smax], interpolation='none',
+        cmap=cm.rainbow, origin='lower', aspect='auto')  
+CS = ax.contour(S, A, m2_smoothed, levels=levels, colors='k', linewidths=0.4,
+        alpha=0.5)
+        #extent=[Amin,Amax,Smin,Smax],
+        #origin='lower')    
+
+ax.clabel(CS, inline=1, fontsize=10)
+
 plt.xticks(A[::3], [str(int(a)) for a in A[::3]])
 plt.yticks(S[::3], [str(int(a)) for a in S[::3]])
 plt.title('rate of contact at awakening')
@@ -342,6 +372,40 @@ cax = divider.append_axes('right', size='5%', pad=0.05)
 fig.colorbar(im, cax=cax, orientation='vertical')
 plt.tight_layout()
 plt.show()  
+
+
+#===========================================================================
+
+levels = np.arange(0.1,1.0,0.1)
+ 
+
+
+fig, ax = plt.subplots()
+
+im = ax.imshow(m2, origin='lower', aspect='auto',
+        #interpolation='kaiser',
+        extent=[Amin,Amax,Smin,Smax],
+        vmin=0, vmax=1.,
+        cmap=cm.viridis)
+
+CS = ax.contour(m2_smoothed, levels=levels, colors='k',
+        extent=[Amin,Amax,Smin,Smax],
+        linewidths=0.4, alpha=0.4)
+
+ax.clabel(CS, list(CS.levels[5:]), inline=1, fontsize=10, fmt='%1.1f')
+
+plt.xticks(A[::3], [str(int(a)) for a in A[::3]])
+plt.yticks(S[::3], [str(int(a)) for a in S[::3]])
+plt.title('rate of contact at awakening')
+plt.xlabel('awakening rate (x1000 yr)')
+plt.ylabel('survival rate (x1000 yr)')
+divider = make_axes_locatable(ax)
+cax = divider.append_axes('right', size='5%', pad=0.05)
+fig.colorbar(im, cax=cax, orientation='vertical')
+plt.tight_layout()
+plt.show()  
+                  
+
 #===========================================================================
 
 
@@ -350,7 +414,7 @@ plt.show()
  
 ########################################### Fig.::: distr. galctocentric distance
 
-l = (D['tau_awakening']< 20000) &  (D['tau_survive']> 20000) & (D['D_max']==10000.)
+l = (D['tau_awakening']< 37000) &  (D['tau_survive']> 60000) & (D['D_max']==50000.)
 d = D[l]
 awaken, inbox, distancias, hangon, waiting, count, index, firstc, ncetis, x, y = redux(d)
 
@@ -361,8 +425,8 @@ l1 = inbox == 1
 l2 = inbox == 2
 l3 = inbox == 3
 
-#x = np.array(x)
-#y = np.array(y)
+x = np.array(x)
+y = np.array(y)
 #
 #plt.scatter(x[l1],y[l1],color='slateblue', s=0.1)
 #plt.scatter(x[l2],y[l2],color='crimson', alpha=0.6, s=0.4)
@@ -388,6 +452,11 @@ plt.legend(loc=2)
 plt.show()
 #===========================================================================
 
+
+
+
+
+########################################### Fig.::: comunicacion bidireccional
 
 
 

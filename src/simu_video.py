@@ -33,7 +33,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-n = 100.
+n = 100
 theta = np.linspace(0, 2*np.pi, n, endpoint=True)
 
 
@@ -281,7 +281,6 @@ def animate(i):
     xs[1,:] = xs[1,::-1]
     ys[1,:] = ys[1,::-1]
     fill.set_data(np.ravel(xs), np.ravel(ys))
-    fill.color('cadetblue')
     #,color='cadetblue')
 #            color='cadetblue',edgecolor='green', alpha=0.3) 
     return fill,
@@ -301,3 +300,132 @@ ver https://stackoverflow.com/questions/16120801/matplotlib-animate-fill-between
 ###########################################################################
 ###########################################################################
 ###########################################################################
+
+
+from matplotlib import animation
+import numpy as np
+import matplotlib.pyplot as plt
+
+fig, ax = plt.subplots()
+ax.set_xlim([0,10000])
+
+n = 100
+i= 3
+radii = [i/10.,i+3/10.]
+theta = np.linspace(0, 2*np.pi, n, endpoint=True)
+xs = np.outer(radii, np.cos(theta))
+ys = np.outer(radii, np.sin(theta))
+xs[1,:] = xs[1,::-1]
+ys[1,:] = ys[1,::-1]
+
+collection = plt.fill(np.ravel(xs), np.ravel(ys))
+
+def animate(i):
+    path = collection.get_paths()[0]
+    path.vertices[:, 1] *= 0.9
+
+anim = animation.FuncAnimation(fig, animate,
+                        frames=25, interval=30)
+anim.save('anim.mp4', fps=30, extra_args=['-vcodec', 'libx264'])
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+import numpy as np
+from matplotlib import pyplot as plt
+from matplotlib import animation
+
+fig = plt.figure()
+ax = plt.axes(xlim=(-30, 30), ylim=(-30, 30))
+
+# initialization function: plot the background of each frame
+def init():
+    fill.set_data([], [])
+    return fill,
+
+# animation function.  This is called sequentially
+def animate(i):
+    n = 100
+    radii = [i/10.,i+3/10.]
+    theta = np.linspace(0, 2*np.pi, n, endpoint=True)
+    xs = np.outer(radii, np.cos(theta))
+    ys = np.outer(radii, np.sin(theta))
+    xs[1,:] = xs[1,::-1]
+    ys[1,:] = ys[1,::-1]
+    fill.set_data(np.ravel(xs), np.ravel(ys))
+    #,color='cadetblue')
+#            color='cadetblue',edgecolor='green', alpha=0.3) 
+    return fill,
+
+anim = animation.FuncAnimation(fig, animate, init_func=init,
+                               frames=200, interval=10, blit=True)
+
+anim.save('basic_animation.mp4', fps=30, extra_args=['-vcodec', 'libx264'])
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+import numpy as np
+from matplotlib import pyplot as plt
+from matplotlib import animation
+
+fig = plt.figure()
+ax = plt.axes(xlim=(-30, 30), ylim=(-30, 30))
+fill, = ax.plot([], [], lw=2)
+
+def init():
+    fill.set_data([], [])
+    fill.set_color('cadetblue')
+    return fill,
+
+def animate(i):
+    n = 100
+    radii = [i/10.,i+3/10.]
+    theta = np.linspace(0, 2*np.pi, n, endpoint=True)
+    xs = np.outer(radii, np.cos(theta))
+    ys = np.outer(radii, np.sin(theta))
+    xs[1,:] = xs[1,::-1]
+    ys[1,:] = ys[1,::-1]
+    fill.set_data(np.ravel(xs), np.ravel(ys))
+    #,color='cadetblue')
+#            color='cadetblue',edgecolor='green', alpha=0.3) 
+    return fill,
+
+anim = animation.FuncAnimation(fig, animate, init_func=init,
+                               frames=200, interval=10, blit=True)
+
+anim.save('anim.mp4', fps=30, extra_args=['-vcodec', 'libx264'])
+

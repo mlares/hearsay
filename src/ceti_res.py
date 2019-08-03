@@ -368,6 +368,59 @@ plt.show()
 ########################################### Fig.::: comunicacion bidireccional
 
 
+########################################### Fig.::: perfil radial normalizado
+
+D = pandas.read_csv('../dat/SKRU_02/params.csv')
+
+l = (D['tau_awakening']< 17000) &  (D['tau_survive']> 10000)
+d = D[l]
+awaken, inbox, distancias, hangon, waiting, count, index, firstc, ncetis, x, y = redux(d)
+
+inbox = np.array(inbox)
+
+l0 = inbox == 0
+l1 = inbox == 1
+l2 = inbox == 2
+l3 = inbox == 3
+
+x = np.array(x)
+y = np.array(y)
+
+distt = np.sqrt(x**2 + y**2)
+dist0 = np.sqrt(x[l0]**2 + y[l0]**2)
+dist1 = np.sqrt(x[l1]**2 + y[l1]**2)
+dist2 = np.sqrt(x[l2]**2 + y[l2]**2)
+dist3 = np.sqrt(x[l3]**2 + y[l3]**2)
+
+# normalizar:
 
 
+
+dsts = [dist0, dist1, dist2, dist3]
+ns = [300, 100, 100, 100]
+lbl = ['No contact','1','2','3']
+colors = ['slategrey','slateblue','crimson','forestgreen']
+lwd = [3,1,1,1]
+
+for d, n, lb, c, l in zip(dsts, ns, lbl, colors, lwd):
+    bins = np.linspace(20000,60000,n)
+    Hy, Hx = np.histogram(d, bins=bins, density=False)
+    Hm = (Hx[1:] + Hx[:-1])/2
+    Hty, Htx = np.histogram(distt, bins=bins, density=False)
+    Hy = Hy / Hty
+    #plt.step(Hx[:-1], Hy, color=c,linewidth=l, label=lb, where='pre')
+    plt.scatter(Hx[:-1], Hy, color=c, s=3, alpha=0.5, label=lb)
+
+    p=np.polyfit(Hm, Hy, 2)
+    f=Hm**2*p[0] + Hm*p[1] + p[2]
+    plt.plot(Hm, f, color=c, linewidth=1) 
+
+
+plt.title('radial distribution of cetis with contact')
+plt.xlabel('gactocentric distance (lyr)')
+plt.ylabel('frac')
+plt.xlim(20000, 60000)
+plt.yscale('log')
+plt.legend(loc=2) 
+plt.show()
 

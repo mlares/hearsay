@@ -6,69 +6,14 @@ from matplotlib import pyplot as plt
 import pandas
 import seaborn as sns
 
+from ceti_exp import redux
+
 #===============================================================================
-def redux(D):
-
-    index = []
-    firstc = []
-    ncetis = []
-    awaken = []     # lapso de tiempo que esta activa
-    waiting = []    # lapso de tiempo que espera hasta el primer contacto
-    inbox = []      # cantidad de cetis que esta escuchando
-    distancias = [] # distancias a las cetis contactadas
-    hangon = []     # lapso de tiempo que esta escuchando otra CETI
-    x = []
-    y = []
-    N = len(D)
-    kcross = 0
-    
-    for filename in D['name']:        
-
-        CETIs = pickle.load( open(filename, "rb") )
-
-        M = len(CETIs)
-        ncetis.append(M)
-    
-        for i in range(M): # experiments
-    
-            k = len(CETIs[i]) # CETIs resulting from the experiment
-            inbox.append(k-1)
-            awaken.append(CETIs[i][0][5] - CETIs[i][0][4])
-            index.append(kcross)
-            x.append(CETIs[i][0][2])
-            y.append(CETIs[i][0][3])
-
-            firstcontact = 1.e8
-
-            for l in range(1,k):  # traverse contacts
-
-                earlier = CETIs[i][l][4] - CETIs[i][0][4]
-                firstcontact = min(earlier, firstcontact)
-                Dx = np.sqrt(((
-                    np.array(CETIs[i][0][2:4]) - 
-                    np.array(CETIs[i][l][2:4]))**2).sum())
-
-                waiting.append(earlier)
-                distancias.append(Dx)
-                hangon.append(CETIs[i][l][5] - CETIs[i][l][4])
-    
-            if(k>1): firstc.append(firstcontact)
-
-        kcross+=1
-            
-    N = 12
-    count = [0]*N
-    for i in range(N):
-        count[i] = inbox.count(i)
- 
-    return(awaken, inbox, distancias, hangon, waiting, count, index,
-            firstc, ncetis, x, y)
-#===============================================================================
-    
+   
 
 
 #)))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))
-D = pandas.read_csv('../dat/SKRU_08/params.csv')
+D = pandas.read_csv('../dat/SKRU_07/params_SKRU_07.csv')
 
 l1 = (D['tau_awakening']<37000) & (D['tau_survive']<60000) & (D['D_max']==50000.)
 l2 = (D['tau_awakening']>85000) & (D['tau_survive']>450000) & (D['D_max']==50000.)
@@ -254,38 +199,17 @@ plt.show()
 
 
 
-import matplotlib.cm as cm
 
 
 #==================================================================Fig.
 ### RATE OF NO CONTACT VS. TAU_A AND TAU_S
 
+import matplotlib.cm as cm
 from mpl_toolkits.axes_grid1 import make_axes_locatable
+from scipy import ndimage
 
 
-A = D['tau_awakening'].unique()
-A.sort()
-dA = (A[1:len(A)]-A[0:(len(A)-1)]).mean()
-Amin = A[0]-dA/2.
-Amax = A[-1]+dA/2.
-
-S = D['tau_survive'].unique()
-S.sort()
-dS = (S[1:len(S)]-S[0:(len(S)-1)]).mean()
-Smin = S[0]-dS/2.
-Smax = S[-1]+dS/2.
-
-N1 = len(A)
-N2 = len(S)
-m=np.zeros((N1,N2))
-           
-for i, a in enumerate(A):
-    for j, s in enumerate(S):
-        l = (D['tau_awakening']==a) & (D['tau_survive']==s) & (D['D_max']==50000.)
-        d = D[l]
-        awaken, inbox, distancias, hangon, waiting, count, index, firstc, ncetis, x, y = redux(d)
-        m[i][j] = inbox.count(0)/max(len(inbox), 1)
-m = np.transpose(m)
+m = pickle.load( open('../dat/SKRU_07/matrix1_d3_SKRU07.pkl', "rb") )
 
 
 fig, ax = plt.subplots()
@@ -306,41 +230,18 @@ plt.show()
 
 
 
+
+
+
+
+
+
+
+
+
 #====================================================================Fig.
-### RATE OF FIRST CONTACT AT AWAKENING VS. TAU_A AND TAU_S
-# de todas las cetis que hicieron contacto alguna vez, cuales lo hicieron en el awakening
 
-from scipy import ndimage
-
-
-
-A = D['tau_awakening'].unique()
-A.sort()
-A = A/1000.
-dA = (A[1:len(A)]-A[0:(len(A)-1)]).mean()
-Amin = A[0]-dA/2.
-Amax = A[-1]+dA/2.
-
-S = D['tau_survive'].unique()
-S.sort()
-S = S/1000.
-dS = (S[1:len(S)]-S[0:(len(S)-1)]).mean()
-Smin = S[0]-dS/2.
-Smax = S[-1]+dS/2.
-
-N1 = len(A)
-N2 = len(S)
-m2=np.zeros((N1,N2))
-
-for i, a in enumerate(A):
-    for j, s in enumerate(S):
-        l = (D['tau_awakening']==a) & (D['tau_survive']==s) & (D['D_max']==50000.)
-        d = D[l]
-        awaken, inbox, distancias, hangon, waiting, count, index, firstc, ncetis, x, y = redux(d)
-        m2[i][j] = firstc.count(0.)/max(len(firstc),1)
-
-m2t = np.transpose(m2)
-
+m = pickle.load( open('../dat/SKRU_07/matrix1_d3_SKRU07.pkl', "rb") )
 
 sigma=[2,2]
 m2t_smoothed=ndimage.filters.gaussian_filter(m2t, sigma)
@@ -407,6 +308,14 @@ plt.show()
                   
 
 #===========================================================================
+
+
+
+
+
+
+
+
 
 
 

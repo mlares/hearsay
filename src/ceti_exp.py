@@ -176,3 +176,69 @@ def ceti_exp(GHZ_inner, GHZ_outer, tau_awakening, tau_survive, D_max, t_max):
     
     return(CETIs) 
     #}}}
+
+
+
+def redux(D):
+
+    import pickle
+    import numpy as np
+    index = []
+    firstc = []
+    ncetis = []
+    awaken = []     # lapso de tiempo que esta activa
+    waiting = []    # lapso de tiempo que espera hasta el primer contacto
+    inbox = []      # cantidad de cetis que esta escuchando
+    distancias = [] # distancias a las cetis contactadas
+    hangon = []     # lapso de tiempo que esta escuchando otra CETI
+    x = []
+    y = []
+    N = len(D)
+    kcross = 0
+    
+    for filename in D['name']:        
+
+        try:
+            CETIs = pickle.load( open(filename, "rb") )
+        except EOFError:
+            CETIs = []
+
+        M = len(CETIs)
+        ncetis.append(M)
+    
+        for i in range(M): # experiments
+    
+            k = len(CETIs[i]) # CETIs resulting from the experiment
+            inbox.append(k-1)
+            awaken.append(CETIs[i][0][5] - CETIs[i][0][4])
+            index.append(kcross)
+            x.append(CETIs[i][0][2])
+            y.append(CETIs[i][0][3])
+
+            firstcontact = 1.e8
+
+            for l in range(1,k):  # traverse contacts
+
+                earlier = CETIs[i][l][4] - CETIs[i][0][4]
+                firstcontact = min(earlier, firstcontact)
+                Dx = np.sqrt(((
+                    np.array(CETIs[i][0][2:4]) - 
+                    np.array(CETIs[i][l][2:4]))**2).sum())
+
+                waiting.append(earlier)
+                distancias.append(Dx)
+                hangon.append(CETIs[i][l][5] - CETIs[i][l][4])
+    
+            if(k>1): firstc.append(firstcontact)
+
+        kcross+=1
+            
+    N = 12
+    count = [0]*N
+    for i in range(N):
+        count[i] = inbox.count(i)
+ 
+    return(awaken, inbox, distancias, hangon, waiting, count, index,
+            firstc, ncetis, x, y)
+#===============================================================================
+ 

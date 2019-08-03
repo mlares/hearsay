@@ -10,18 +10,13 @@ import matplotlib.cm as cm
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from scipy import ndimage
 
+# local modules
 from ceti_exp import redux
 
 
-
-
-
-##############################################################################
-
+# Distribution of the number of contacts (cumulative)
 def plot1():
     #{{{
-
-    # Distribucion del numero de contactos
 
     bins = np.arange(-1,12)+0.5
     A = D['tau_awakening'].unique()
@@ -52,9 +47,10 @@ def plot1():
     plt.show()
 #}}}
 
+
+# Distribution of the number of contacts (diferential)
 def plot2():
     #{{{
-    #################################################### DIFERENCIAL
 
     d = D[l1]
     awaken,inbox1,distancias,hangon,waiting,count,index,firstc1,ncetis,x,y = redux(d)
@@ -80,6 +76,7 @@ def plot2():
     plt.show()
 #}}}
 
+#=========================================================  ACUMULADA, Fig. 1
 def plot3():
     #{{{
 
@@ -89,7 +86,6 @@ def plot3():
     ecdf4 = ECDF(inbox4)                                                   
 
 
-    #=========================================================  ACUMULADA, Fig. 1
     plt.plot(ecdf1.x+1, ecdf1.y, label='dense awakening, short lifetime ', linewidth=1, color='teal')
     plt.plot(ecdf2.x+1, ecdf2.y, label='sparse awakening, long lifetime ', linewidth=2, color='slateblue',linestyle='--')
     plt.plot(ecdf3.x+1, ecdf3.y, label='dense awakening, long lifetime  ', linewidth=2, color='firebrick') 
@@ -105,6 +101,7 @@ def plot3():
     plt.show()   
 #}}}
 
+#====================================================================== Fig 2
 def plot4():
     #{{{
 
@@ -113,7 +110,6 @@ def plot4():
     firstc3 = np.array(firstc3)/1000.
     firstc4 = np.array(firstc4)/1000.
 
-    #====================================================================== Fig 2
     bins = np.arange(0, 250, 5)
     plt.hist(firstc1, bins=bins, histtype='step', align='mid', linewidth=1, linestyle='-', color='teal', label='dense awakening, short lifetime ')
     plt.hist(firstc2, bins=bins, histtype='step', align='mid', linewidth=2, linestyle='--', color='slateblue', label='sparse awakening, long lifetime ')
@@ -134,13 +130,11 @@ def plot4():
      
 #}}}
 
+# RATE OF NO CONTACT VS. TAU_A AND TAU_S (Deprecated?)
 def plot5():
     #{{{
 
-    ### RATE OF NO CONTACT VS. TAU_A AND TAU_S
-
     m = pickle.load( open('../dat/SKRU_07/matrix1_d3_SKRU07.pkl', "rb") )
-
 
     fig, ax = plt.subplots()
     im = ax.imshow(m, interpolation='nearest', 
@@ -158,15 +152,33 @@ def plot5():
     plt.show() 
 #}}}
 
-def plot6():
+
+# 2D plots:
+# rate of cETIs that never make contacts (plot_type=1)
+# rate of CETIs that make contact at awakening (plot_type=2)
+def plot6(experiment_run, plot_type, param_dmax):
     #{{{
 
-    D = pandas.read_csv('../dat/SKRU_07/params_SKRU_07.csv')
-    m = pickle.load( open('../dat/SKRU_07/matrix2_d3_SKRU07.pkl', "rb") )
-        # matrices 1: fraccion de cetis que no hacen nunca contacto
-        # matrices 2: fraccion de cetis que hacen contacto en el awakening
-    #titulo = 'rate of CETIs that never make contact' #1
-    titulo = 'rate of contact at awakening'          #2
+    import pandas
+    import pickle
+
+    filename = '../dat/' + experiment_run + '/params_' + experiment_run + '.csv'
+    with open(filename) as f:
+        D = pandas.read_csv(f)
+    
+    filename = '../dat/' + experiment_run + '/matrix' + str(plot_type) \
+               + '_d' + str(param_dmax) + '_' + experiment_run + '.pkl'
+    with open(filename,'rb') as f:
+        m = pickle.load( f )
+
+    # matrices 1: fraccion de cetis que no hacen nunca contacto
+    # matrices 2: fraccion de cetis que hacen contacto en el awakening
+    if plot_type == 1:
+        titulo = 'rate of CETIs that never make contact'
+    elif plot_type == 2:
+        titulo = 'rate of contact at awakeninig'
+    else:
+        print('please use a valid plot_type')
 
     mt = np.transpose(m)
     sigma=[2,2]
@@ -199,7 +211,7 @@ def plot6():
     fig, ax = plt.subplots()
 
     im = ax.imshow(mt, origin='lower', aspect='auto',
-            interpolation='kaiser',
+            #interpolation='kaiser',
             extent=[Amin,Amax,Smin,Smax],
             vmin=0, vmax=1.,
             cmap=cm.viridis)
@@ -223,11 +235,11 @@ def plot6():
     plt.tight_layout()
     plt.show()  
 #}}}
-                      
+
+
+# Distribution of galctocentric distances
 def plot7():
     #{{{
- 
-    ########################################### Fig.::: distr. galctocentric distance
 
     l = (D['tau_awakening']< 37000) &  (D['tau_survive']> 60000) & (D['D_max']==50000.)
     d = D[l]
@@ -267,10 +279,10 @@ def plot7():
     plt.show()
 #}}}
 
+
+# Normalized radial profile
 def plot8():
     #{{{
-
-    ########################################### Fig.::: perfil radial normalizado
 
     D = pandas.read_csv('../dat/SKRU_02/params.csv')
 

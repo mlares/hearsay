@@ -238,7 +238,96 @@ def redux(D):
     for i in range(N):
         count[i] = inbox.count(i)
  
-    return(awaken, inbox, distancias, hangon, waiting, count, index,
-            firstc, ncetis, x, y)
-#===============================================================================
+    return(awaken,      # lifetime of the CETI
+           inbox,       # number of contact a single CETI makes
+           distancias,  # distance between communicating CETIs
+           hangon,      # duration of the contact
+           waiting,     # time elapsed from awakening to contact
+           count,       # distribution of the multiplicity of contacts
+           index,       # ID if the CETI in the simulation run
+           firstc,      # time of the first contact (measured from awakening)
+           ncetis,      # total number of CETIs in each simulated points
+           x,           # x position in the galaxy
+           y)           # y position in the galaxy
+                
  
+ 
+def reddux(D):
+
+    import pickle
+    import numpy as np
+    index = []
+    firstc = []
+    ncetis = []
+    awaken = []     # lapso de tiempo que esta activa
+    waiting = []    # lapso de tiempo que espera hasta el primer contacto
+    inbox = []      # cantidad de cetis que esta escuchando
+    distancias = [] # distancias a las cetis contactadas
+    hangon = []     # lapso de tiempo que esta escuchando otra CETI
+    x = []
+    y = []
+    N = len(D)
+    kcross = 0
+    
+    for filename in D['name']:        
+
+        try:
+            CETIs = pickle.load( open(filename, "rb") )
+        except EOFError:
+            CETIs = []
+
+        M = len(CETIs)
+        ncetis.append(M)
+    
+        for i in range(M): # experiments
+    
+            k = len(CETIs[i]) # CETIs resulting from the experiment
+            inbox.append(k-1)
+            awaken.append(CETIs[i][0][5] - CETIs[i][0][4])
+            index.append(kcross)
+            x.append(CETIs[i][0][2])
+            y.append(CETIs[i][0][3])
+
+            firstcontact = 1.e8
+
+            for l in range(1,k):  # traverse contacts
+
+                earlier = CETIs[i][l][4] - CETIs[i][0][4]
+                firstcontact = min(earlier, firstcontact)
+                Dx = np.sqrt(((
+                    np.array(CETIs[i][0][2:4]) - 
+                    np.array(CETIs[i][l][2:4]))**2).sum())
+
+                waiting.append(earlier)
+                distancias.append(Dx)
+                hangon.append(CETIs[i][l][5] - CETIs[i][l][4])
+    
+            if(k>1): firstc.append(firstcontact)
+
+        kcross+=1
+            
+    N = 12
+    count = [0]*N
+    for i in range(N):
+        count[i] = inbox.count(i)
+ 
+    return({
+           # all CETIs
+           'A':awaken,    # lifetime of the CETI                  
+           'inbox':inbox, # number of contact a single CETI makes 
+           'index':index, # ID if the CETI in the simulation run  
+           'x':x,         # x position in the galaxy              
+           'y':y,         # y position in the galaxy              
+           #
+           # all pairs of CETIs that make contact
+           'dist':distancias, # distance between communicating CETIs                
+           'hangon':hangon,   # duration of the contact                             
+           'w':waiting,       # time elapsed from awakening to contact              
+           'c1':firstc,       # time of the first contact (measured from awakening) 
+           #
+           # all simulated points in the parameter space
+           'n':ncetis,  # total number of CETIs in each simulated points 
+           #
+           # chosen integer bins in multiplicity
+           'count':count}) # distribution of the multiplicity of contacts
+

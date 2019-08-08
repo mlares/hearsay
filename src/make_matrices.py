@@ -7,7 +7,7 @@ import pandas
 import seaborn as sns
 
 from mpl_toolkits.axes_grid1 import make_axes_locatable
-from ceti_exp import redux
+from ceti_exp import redux, reddux
 
 D = pandas.read_csv('../dat/SKRU_07/params_SKRU_07.csv')
 
@@ -112,22 +112,28 @@ for i, a in enumerate(A):
 
 
 
+m1_d1 = np.transpose(m1_d1)
+m2_d1 = np.transpose(m2_d1)
+
+m1_d2 = np.transpose(m1_d2)
+m2_d2 = np.transpose(m2_d2)
+
+m1_d3 = np.transpose(m1_d3)
+m2_d3 = np.transpose(m2_d3)
+
+m1_d4 = np.transpose(m1_d4)
+m2_d4 = np.transpose(m2_d4)
 
 
+pickle.dump( m1_d1, open('../dat/SKRU_07/matrix1_d1_SKRU_07.pkl', 'wb'))
+pickle.dump( m1_d2, open('../dat/SKRU_07/matrix1_d2_SKRU_07.pkl', 'wb'))
+pickle.dump( m1_d3, open('../dat/SKRU_07/matrix1_d3_SKRU_07.pkl', 'wb'))
+pickle.dump( m1_d4, open('../dat/SKRU_07/matrix1_d4_SKRU_07.pkl', 'wb'))
 
-
-m = np.transpose(m)
-                      
-
-pickle.dump( m1_d1, open('../dat/SKRU_07/matrix1_d1_SKRU07.pkl', 'wb'))
-pickle.dump( m1_d2, open('../dat/SKRU_07/matrix1_d2_SKRU07.pkl', 'wb'))
-pickle.dump( m1_d3, open('../dat/SKRU_07/matrix1_d3_SKRU07.pkl', 'wb'))
-pickle.dump( m1_d4, open('../dat/SKRU_07/matrix1_d4_SKRU07.pkl', 'wb'))
-
-pickle.dump( m2_d1, open('../dat/SKRU_07/matrix2_d1_SKRU07.pkl', 'wb'))
-pickle.dump( m2_d2, open('../dat/SKRU_07/matrix2_d2_SKRU07.pkl', 'wb'))
-pickle.dump( m2_d3, open('../dat/SKRU_07/matrix2_d3_SKRU07.pkl', 'wb'))
-pickle.dump( m2_d4, open('../dat/SKRU_07/matrix2_d4_SKRU07.pkl', 'wb'))
+pickle.dump( m2_d1, open('../dat/SKRU_07/matrix2_d1_SKRU_07.pkl', 'wb'))
+pickle.dump( m2_d2, open('../dat/SKRU_07/matrix2_d2_SKRU_07.pkl', 'wb'))
+pickle.dump( m2_d3, open('../dat/SKRU_07/matrix2_d3_SKRU_07.pkl', 'wb'))
+pickle.dump( m2_d4, open('../dat/SKRU_07/matrix2_d4_SKRU_07.pkl', 'wb'))
 
 
 

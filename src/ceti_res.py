@@ -14,82 +14,72 @@ from scipy import ndimage
 from ceti_exp import redux
 
 
-# Distribution of the number of contacts (cumulative)
-def plot1():
-    #{{{
+# Definition of subsamples:
 
-    bins = np.arange(-1,12)+0.5
-    A = D['tau_awakening'].unique()
-    S = D['tau_survive'].unique()
-                                                          
+recompute = False
 
-    d = D[l1]
-    awaken,inbox1s,distancias,hangon,waiting,count, index, firstc, ncetis, x, y = redux(d) 
-    d = D[l2]
-    awaken,inbox2s,distancias,hangon,waiting,count, index, firstc, ncetis, x, y = redux(d) 
-    d = D[l3]
-    awaken,inbox3s,distancias,hangon,waiting,count, index, firstc, ncetis, x, y = redux(d) 
-    d = D[l4]
-    awaken,inbox4s,distancias,hangon,waiting,count, index, firstc, ncetis, x, y = redux(d) 
+if(recompute):
+    la_low = D['tau_awakening'].isin([12000,16000,20000,24000,28000])
+    la_upp = D['tau_awakening'].isin([172000,176000,180000,184000,188000])
 
+    ls_low = D['tau_survive'].isin([10000,20000,30000,40000,50000])
+    ls_upp = D['tau_survive'].isin([400000,410000,420000,430000,440000])
 
-    plt.hist(inbox1s, bins=bins, histtype='step', align='mid', color='teal',
-            label='l1s', linewidth=2)
-    plt.hist(inbox2s, bins=bins, histtype='step', align='mid',color='slateblue',
-            label='l2s', linewidth=2)
-    plt.hist(inbox3s, bins=bins, histtype='step', align='mid',color='slateblue',
-            label='l3s', linewidth=2)
-    plt.hist(inbox4s, bins=bins, histtype='step', align='mid',color='slateblue',
-            label='l4s', linewidth=2)
+    ld_1k = D['D_max']==1000.
+    ld_10k = D['D_max']==10000.
+    ld_40k = D['D_max']==40000.
+    ld_80k = D['D_max']==80000. 
 
-    plt.xticks(np.arange(0, 12, 2))
-    plt.legend()
-    plt.show()
-#}}}
+#- - - -
+    l1_d10k = la_low & ls_low & ld_10k
+    l2_d10k = la_low & ls_upp & ld_10k
+    l3_d10k = la_upp & ls_low & ld_10k
+    l4_d10k = la_upp & ls_upp & ld_10k
 
+    l1_d40k = la_low & ls_low & ld_40k
+    l2_d40k = la_low & ls_upp & ld_40k
+    l3_d40k = la_upp & ls_low & ld_40k
+    l4_d40k = la_upp & ls_upp & ld_40k
 
-# Distribution of the number of contacts (diferential)
-def plot2():
-    #{{{
-
-    d = D[l1]
-    awaken,inbox1,distancias,hangon,waiting,count,index,firstc1,ncetis,x,y = redux(d)
-    d = D[l2]
-    awaken,inbox2,distancias,hangon,waiting,count,index,firstc2,ncetis,x,y = redux(d)
-    d = D[l3]
+    l1_d80k = la_low & ls_low & ld_80k
+    l2_d80k = la_low & ls_upp & ld_80k
+    l3_d80k = la_upp & ls_low & ld_80k
+    l4_d80k = la_upp & ls_upp & ld_80k
+#- - - -
+     
+    d = D[l1_d40k]
+    awaken,inbox1,distancias,hangon,waiting,count,index,firstc1,ncetis,x,y = redux(d) 
+    d = D[l2_d40k]
+    awaken,inbox2,distancias,hangon,waiting,count,index,firstc2,ncetis,x,y = redux(d) 
+    d = D[l3_d40k]
     awaken,inbox3,distancias,hangon,waiting,count,index,firstc3,ncetis,x,y = redux(d) 
-    d = D[l4]
+    d = D[l4_d40k]
     awaken,inbox4,distancias,hangon,waiting,count,index,firstc4,ncetis,x,y = redux(d) 
-
-    plt.hist(inbox1, bins=bins, histtype='step', align='mid', color='teal',
-            label='l1s', linewidth=2, density=True)
-    plt.hist(inbox2, bins=bins, histtype='step', align='mid',color='slateblue',
-            label='l2s', linewidth=2, density=True)
-    plt.hist(inbox3, bins=bins, histtype='step', align='mid',color='firebrick',
-            label='l3s', linewidth=2, density=True)
-    plt.hist(inbox4, bins=bins, histtype='step', align='mid',color='tomato',
-            label='l4s', linewidth=2, density=True)
-
-    plt.xticks(np.arange(0, 12, 2))
-    plt.yscale('log')
-    plt.legend()
-    plt.show()
-#}}}
-
-#=========================================================  ACUMULADA, Fig. 1
-def plot3():
-    #{{{
-
+     
     ecdf1 = ECDF(inbox1)                                                   
     ecdf2 = ECDF(inbox2)                                                   
     ecdf3 = ECDF(inbox3)                                                   
     ecdf4 = ECDF(inbox4)                                                   
 
 
-    plt.plot(ecdf1.x+1, ecdf1.y, label='dense awakening, short lifetime ', linewidth=1, color='teal')
-    plt.plot(ecdf2.x+1, ecdf2.y, label='sparse awakening, long lifetime ', linewidth=2, color='slateblue',linestyle='--')
-    plt.plot(ecdf3.x+1, ecdf3.y, label='dense awakening, long lifetime  ', linewidth=2, color='firebrick') 
-    plt.plot(ecdf4.x+1, ecdf4.y, label='sparse awakening, short lifetime', linewidth=1, color='tomato', linestyle='--')
+#====================================================================== Fig. 4
+def fig4():
+    #{{{
+ 
+# 1 = a_low & s_low  #'dense awakening, short lifetime '
+# 2 = a_low & s_upp  #'dense awakening, long lifetime  '
+# 3 = a_upp & s_low  #'sparse awakening, short lifetime'
+# 4 = a_upp & s_upp  #'sparse awakening, long lifetime '
+
+
+    plt.plot(ecdf1.x+1, ecdf1.y, label='dense awakening, short lifetime ',\
+            linewidth=1, color='teal')
+    plt.plot(ecdf2.x+1, ecdf2.y, label='dense awakening, long lifetime  ',\
+            linewidth=2, color='slateblue',linestyle='--')
+    plt.plot(ecdf3.x+1, ecdf3.y, label='sparse awakening, short lifetime',\
+            linewidth=2, color='firebrick') 
+    plt.plot(ecdf4.x+1, ecdf4.y, label='sparse awakening, long lifetime ',\
+            linewidth=1, color='tomato', linestyle='--')
      
     plt.xlim(1,120)
     plt.xscale('log') 
@@ -98,66 +88,56 @@ def plot3():
     plt.ylabel('N(<M)/N')
     plt.tight_layout(pad=0.4, w_pad=0.5, h_pad=1.0)
     plt.rcParams.update({'font.size': 12})
-    plt.show()   
+
+    plt.savefig("foo.pdf", bbox_inches='tight')
+
+
 #}}}
 
-#====================================================================== Fig 2
-def plot4():
+#====================================================================== Fig. 5
+def fig5():
     #{{{
 
-    firstc1 = np.array(firstc1)/1000.
-    firstc2 = np.array(firstc2)/1000.
-    firstc3 = np.array(firstc3)/1000.
-    firstc4 = np.array(firstc4)/1000.
+# 1 = a_low & s_low  #'dense awakening, short lifetime')
+# 2 = a_low & s_upp  #'dense awakening, long lifetime')
+# 3 = a_upp & s_low  #'sparse awakening, short lifetime')
+# 4 = a_upp & s_upp  #'sparse awakening, long lifetime')
 
-    bins = np.arange(0, 250, 5)
-    plt.hist(firstc1, bins=bins, histtype='step', align='mid', linewidth=1, linestyle='-', color='teal', label='dense awakening, short lifetime ')
-    plt.hist(firstc2, bins=bins, histtype='step', align='mid', linewidth=2, linestyle='--', color='slateblue', label='sparse awakening, long lifetime ')
-    plt.hist(firstc3, bins=bins, histtype='step', align='mid', linewidth=2, linestyle='-', color='firebrick', label='dense awakening, long lifetime ')
-    plt.hist(firstc4, bins=bins, histtype='step', align='mid', linewidth=1, linestyle='--', color='tomato', label='sparse awakening, short lifetime')
+    firstc_n1 = np.array(firstc1)/1000.
+    firstc_n2 = np.array(firstc2)/1000.
+    firstc_n3 = np.array(firstc3)/1000.
+    firstc_n4 = np.array(firstc4)/1000.
 
-    #plt.xticks(np.arange(0, 12, 2))
+    bins = np.arange(0, 250, 10)
+    plt.hist(firstc_n1, bins=bins, histtype='step', align='mid', linewidth=1, linestyle='-', color='teal', label='dense awakening, short lifetime ')
+    plt.hist(firstc_n2, bins=bins, histtype='step', align='mid', linewidth=2, linestyle='--', color='slateblue', label='dense awakening, long lifetime')
+    plt.hist(firstc_n3, bins=bins, histtype='step', align='mid', linewidth=2, linestyle='-', color='firebrick', label='sparse awakening, short lifetime')
+    plt.hist(firstc_n4, bins=bins, histtype='step', align='mid', linewidth=1, linestyle='--', color='tomato', label='sparse awakening, long lifetime')
+
     plt.yscale('log')
-    plt.xlim(1,120)
+    plt.xlim(1,250)
     plt.legend(loc=1)
     plt.xlabel('waiting time for first contact (x10^3 yr)')
     plt.ylabel('EPDF')
     plt.tight_layout(pad=0.4, w_pad=0.5, h_pad=1.0)
     plt.rcParams.update({'font.size': 12})
     plt.show()   
+    #plt.savefig("foo.pdf", bbox_inches='tight')
     #=============================================================================
 
      
 #}}}
 
-# RATE OF NO CONTACT VS. TAU_A AND TAU_S (Deprecated?)
-def plot5():
-    #{{{
-
-    m = pickle.load( open('../dat/SKRU_07/matrix1_d3_SKRU07.pkl', "rb") )
-
-    fig, ax = plt.subplots()
-    im = ax.imshow(m, interpolation='nearest', 
-            extent=[Amin,Amax,Smin,Smax], cmap=cm.viridis,
-            origin='lower', aspect='auto')
-    plt.xticks(A[::3], [str(int(a)) for a in A[::3]])
-    plt.yticks(S[::3], [str(int(a)) for a in S[::3]])
-    plt.title('rate of no contact')
-    plt.xlabel('awakening rate')
-    plt.ylabel('survival rate')
-    divider = make_axes_locatable(ax)
-    cax = divider.append_axes('right', size='5%', pad=0.05)
-    fig.colorbar(im, cax=cax, orientation='vertical')
-    plt.tight_layout()
-    plt.show() 
-#}}}
 
 
+#====================================================================== Fig. 7
 # 2D plots:
 # rate of cETIs that never make contacts (plot_type=1)
 # rate of CETIs that make contact at awakening (plot_type=2)
-def plot6(experiment_run, plot_type, param_dmax):
+def fig7(experiment_run, plot_type, param_dmax):
     #{{{
+
+    #experiment_run, plot_type, param_dmax = 'SKRU_07', 1, 2
 
     import pandas
     import pickle
@@ -168,6 +148,7 @@ def plot6(experiment_run, plot_type, param_dmax):
     
     filename = '../dat/' + experiment_run + '/matrix' + str(plot_type) \
                + '_d' + str(param_dmax) + '_' + experiment_run + '.pkl'
+    print(filename)
     with open(filename,'rb') as f:
         m = pickle.load( f )
 
@@ -284,10 +265,9 @@ def plot7():
 def plot8():
     #{{{
 
-    D = pandas.read_csv('../dat/SKRU_02/params.csv')
+    D = pandas.read_csv('../dat/SKRU_07/params_SKRU_07.csv')
 
-    l = (D['tau_awakening']< 17000) &  (D['tau_survive']> 10000)
-    d = D[l]
+    d = D[l1_d40k]
     awaken, inbox, distancias, hangon, waiting, count, index, firstc, ncetis, x, y = redux(d)
 
     inbox = np.array(inbox)
@@ -335,3 +315,290 @@ def plot8():
     plt.legend(loc=2) 
     plt.show()
 #}}}
+
+
+
+
+
+
+
+def waiting_a_acum_log(reload=False):
+    #{{{
+ 
+    if(reload):
+        D = pandas.read_csv('../dat/SKRU_07/params_SKRU_07.csv')
+
+        ls = D['tau_survive'].isin([170000, 180000, 190000, 200000, 
+                                    210000, 220000, 230000, 240000])
+        ld = D['D_max'].isin([40000.])
+
+        ls1 = ls & ld &   D['tau_awakening'].isin([8000  ])
+        ls2 = ls & ld &   D['tau_awakening'].isin([28000 ])
+        ls3 = ls & ld &   D['tau_awakening'].isin([48000 ])
+        ls4 = ls & ld &   D['tau_awakening'].isin([68000 ])
+        ls5 = ls & ld &   D['tau_awakening'].isin([108000])
+        ls6 = ls & ld &   D['tau_awakening'].isin([188000])
+
+        res1 = reddux(D[ls1])
+        res2 = reddux(D[ls2])
+        res3 = reddux(D[ls3])
+        res4 = reddux(D[ls4])
+        res5 = reddux(D[ls5])
+        res6 = reddux(D[ls6])        
+
+        ecdf1 = ECDF(res1['w'])
+        ecdf2 = ECDF(res2['w'])
+        ecdf3 = ECDF(res3['w'])
+        ecdf4 = ECDF(res4['w'])
+        ecdf5 = ECDF(res5['w'])
+        ecdf6 = ECDF(res6['w'])
+
+    plt.plot(ecdf1.x, ecdf1.y,   label='tau_a=8000')
+    plt.plot(ecdf2.x, ecdf2.y,   label='28000') 
+    plt.plot(ecdf3.x, ecdf3.y,   label='48000') 
+    plt.plot(ecdf4.x, ecdf4.y,   label='68000') 
+    plt.plot(ecdf5.x, ecdf5.y,   label='88000') 
+    plt.plot(ecdf6.x, ecdf6.y,   label='108000')
+
+    plt.title('D_max=40000, tau_s in [170000, 240000]')
+    plt.xlabel('t (yr)')
+    plt.ylabel('frac')
+    plt.xlim(1.e1, 1.e6)
+    plt.xscale('log')
+    plt.legend(loc=4) 
+    plt.show()
+#}}}
+
+def waiting_a_acum_lin(reload=False):
+    #{{{
+ 
+    if(reload):
+        D = pandas.read_csv('../dat/SKRU_07/params_SKRU_07.csv')
+
+        ls = D['tau_survive'].isin([170000, 180000, 190000, 200000, 
+                                    210000, 220000, 230000, 240000])
+        ld = D['D_max'].isin([40000.])
+
+        ls1 = ls & ld &   D['tau_awakening'].isin([8000  ])
+        ls2 = ls & ld &   D['tau_awakening'].isin([28000 ])
+        ls3 = ls & ld &   D['tau_awakening'].isin([48000 ])
+        ls4 = ls & ld &   D['tau_awakening'].isin([68000 ])
+        ls5 = ls & ld &   D['tau_awakening'].isin([108000])
+        ls6 = ls & ld &   D['tau_awakening'].isin([188000])
+
+        res1 = reddux(D[ls1])
+        res2 = reddux(D[ls2])
+        res3 = reddux(D[ls3])
+        res4 = reddux(D[ls4])
+        res5 = reddux(D[ls5])
+        res6 = reddux(D[ls6])        
+
+        ecdf1 = ECDF(res1['w'])
+        ecdf2 = ECDF(res2['w'])
+        ecdf3 = ECDF(res3['w'])
+        ecdf4 = ECDF(res4['w'])
+        ecdf5 = ECDF(res5['w'])
+        ecdf6 = ECDF(res6['w'])
+
+    plt.plot(ecdf1.x, ecdf1.y,   label='tau_a=8000')
+    plt.plot(ecdf2.x, ecdf2.y,   label='28000') 
+    plt.plot(ecdf3.x, ecdf3.y,   label='48000') 
+    plt.plot(ecdf4.x, ecdf4.y,   label='68000') 
+    plt.plot(ecdf5.x, ecdf5.y,   label='88000') 
+    plt.plot(ecdf6.x, ecdf6.y,   label='108000')
+
+    plt.title('D_max=40000, tau_s in [170000, 240000]')
+    plt.xlabel('t (yr)')
+    plt.ylabel('frac')
+    plt.xlim(1.e1, 1.e6)
+    plt.legend(loc=4) 
+    plt.show()
+#}}}
+
+def waiting_a_dif_log(reload=False):
+    #{{{
+
+    if(reload):
+        D = pandas.read_csv('../dat/SKRU_07/params_SKRU_07.csv')
+
+        ls = D['tau_survive'].isin([170000, 180000, 190000, 200000, 
+                                    210000, 220000, 230000, 240000])
+        ld = D['D_max'].isin([40000.])
+
+        ls1 = ls & ld &   D['tau_awakening'].isin([8000  ])
+        ls2 = ls & ld &   D['tau_awakening'].isin([28000 ])
+        ls3 = ls & ld &   D['tau_awakening'].isin([48000 ])
+        ls4 = ls & ld &   D['tau_awakening'].isin([68000 ])
+        ls5 = ls & ld &   D['tau_awakening'].isin([108000])
+        ls6 = ls & ld &   D['tau_awakening'].isin([188000])
+
+        res1 = reddux(D[ls1])
+        res2 = reddux(D[ls2])
+        res3 = reddux(D[ls3])
+        res4 = reddux(D[ls4])
+        res5 = reddux(D[ls5])
+        res6 = reddux(D[ls6])
+
+    #bins = np.linspace(0,900000, 100, endpoint=False)
+    bins=np.linspace(0,900, 50, endpoint=False)**2
+    h1y , h1x  = np.histogram(res1['w'], bins=bins)
+    h2y , h2x  = np.histogram(res2['w'], bins=bins)
+    h3y , h3x  = np.histogram(res3['w'], bins=bins)
+    h4y , h4x  = np.histogram(res4['w'], bins=bins)
+    h5y , h5x  = np.histogram(res5['w'], bins=bins)
+    h6y , h6x  = np.histogram(res6['w'], bins=bins)
+
+    plt.step(h1x[:-1], h1y, alpha=0.5, label='tau_a=8000  ', where='pre')
+    plt.step(h2x[:-1], h2y, alpha=0.5, label='28000 ', where='pre')
+    plt.step(h3x[:-1], h3y, alpha=0.5, label='48000 ', where='pre')
+    plt.step(h4x[:-1], h4y, alpha=0.5, label='68000 ', where='pre')
+    plt.step(h5x[:-1], h5y, alpha=0.5, label='108000', where='pre')
+    plt.step(h6x[:-1], h6y, alpha=0.5, label='188000', where='pre')
+
+
+    plt.title('D_max=40000, tau_s in [170000, 240000]')
+    plt.xlabel('t (yr)')
+    plt.ylabel('frac')
+    plt.xlim(0, 800000)
+    plt.yscale('log')
+    plt.legend(loc=1) 
+    plt.show()
+#}}}
+
+
+
+
+def waiting_s_acum_log(reload=False):
+    #{{{
+ 
+    if(reload):
+        D = pandas.read_csv('../dat/SKRU_07/params_SKRU_07.csv')
+
+        la = D['tau_awakening'].isin([68000,  72000,  76000,  80000,  84000,  88000,  
+                                      92000,  96000, 100000])
+        ld = D['D_max'].isin([40000.])
+
+        ls1 = la & ld &   D['tau_survive'].isin([10000 ])
+        ls2 = la & ld &   D['tau_survive'].isin([100000])
+        ls3 = la & ld &   D['tau_survive'].isin([200000])
+        ls4 = la & ld &   D['tau_survive'].isin([300000])
+        ls5 = la & ld &   D['tau_survive'].isin([400000])
+
+        res1 = reddux(D[ls1])
+        res2 = reddux(D[ls2])
+        res3 = reddux(D[ls3])
+        res4 = reddux(D[ls4])
+        res5 = reddux(D[ls5])
+
+        ecdf1 = ECDF(res1['w'])
+        ecdf2 = ECDF(res2['w'])
+        ecdf3 = ECDF(res3['w'])
+        ecdf4 = ECDF(res4['w'])
+        ecdf5 = ECDF(res5['w'])
+
+    plt.plot(ecdf1.x, ecdf1.y,   label='tau_s=10kyr')
+    plt.plot(ecdf2.x, ecdf2.y,   label='100kyr') 
+    plt.plot(ecdf3.x, ecdf3.y,   label='200kyr') 
+    plt.plot(ecdf4.x, ecdf4.y,   label='300kyr') 
+    plt.plot(ecdf5.x, ecdf5.y,   label='400kyr') 
+
+    plt.title('D_max=40000, tau_a in [68000,100000]')
+    plt.xlabel('t (yr)')
+    plt.ylabel('frac')
+    plt.xlim(1.e1, 1.e6)
+    plt.xscale('log')
+    plt.legend(loc=4) 
+    plt.show()
+#}}}
+
+def waiting_s_acum_lin(reload=False):
+    #{{{
+ 
+    if(reload):
+        D = pandas.read_csv('../dat/SKRU_07/params_SKRU_07.csv')
+
+        la = D['tau_awakening'].isin([68000,  72000,  76000,  80000,  84000,  88000,  
+                                      92000,  96000, 100000])
+        ld = D['D_max'].isin([40000.])
+
+        ls1 = la & ld &   D['tau_survive'].isin([10000 ])
+        ls2 = la & ld &   D['tau_survive'].isin([100000])
+        ls3 = la & ld &   D['tau_survive'].isin([200000])
+        ls4 = la & ld &   D['tau_survive'].isin([300000])
+        ls5 = la & ld &   D['tau_survive'].isin([400000])
+
+        res1 = reddux(D[ls1])
+        res2 = reddux(D[ls2])
+        res3 = reddux(D[ls3])
+        res4 = reddux(D[ls4])
+        res5 = reddux(D[ls5])
+
+        ecdf1 = ECDF(res1['w'])
+        ecdf2 = ECDF(res2['w'])
+        ecdf3 = ECDF(res3['w'])
+        ecdf4 = ECDF(res4['w'])
+        ecdf5 = ECDF(res5['w'])
+
+    plt.plot(ecdf1.x, ecdf1.y,   label='tau_s=10kyr')
+    plt.plot(ecdf2.x, ecdf2.y,   label='100kyr') 
+    plt.plot(ecdf3.x, ecdf3.y,   label='200kyr') 
+    plt.plot(ecdf4.x, ecdf4.y,   label='300kyr') 
+    plt.plot(ecdf5.x, ecdf5.y,   label='400kyr') 
+
+    plt.title('D_max=40000, tau_a in [68000,100000]')
+    plt.xlabel('t (yr)')
+    plt.ylabel('frac')
+    plt.xlim(1.e1, 1.e6)
+    plt.legend(loc=4) 
+    plt.show()
+#}}}
+
+
+def waiting_s_dif(reload=False):
+    #{{{
+
+    if(reload):
+        D = pandas.read_csv('../dat/SKRU_07/params_SKRU_07.csv')
+
+        la = D['tau_awakening'].isin([68000,  72000,  76000,  80000,  84000,  88000,  
+                                      92000,  96000, 100000])
+        ld = D['D_max'].isin([40000.])
+
+        ls1 = la & ld &   D['tau_survive'].isin([10000 ])
+        ls2 = la & ld &   D['tau_survive'].isin([100000])
+        ls3 = la & ld &   D['tau_survive'].isin([200000])
+        ls4 = la & ld &   D['tau_survive'].isin([300000])
+        ls5 = la & ld &   D['tau_survive'].isin([400000])
+
+        res1 = reddux(D[ls1])
+        res2 = reddux(D[ls2])
+        res3 = reddux(D[ls3])
+        res4 = reddux(D[ls4])
+        res5 = reddux(D[ls5])           
+
+
+    #bins = np.linspace(0,900000, 100, endpoint=False)
+    bins=np.linspace(0,900, 20, endpoint=False)**2
+    h1y , h1x  = np.histogram(res1['w'], bins=bins)
+    h2y , h2x  = np.histogram(res2['w'], bins=bins)
+    h3y , h3x  = np.histogram(res3['w'], bins=bins)
+    h4y , h4x  = np.histogram(res4['w'], bins=bins)
+    h5y , h5x  = np.histogram(res5['w'], bins=bins)
+
+    plt.step(h1x[:-1], h1y, alpha=0.5, label='tau_s=10kyr', where='pre')
+    plt.step(h2x[:-1], h2y, alpha=0.5, label='100kyr', where='pre')
+    plt.step(h3x[:-1], h3y, alpha=0.5, label='200kyr', where='pre')
+    plt.step(h4x[:-1], h4y, alpha=0.5, label='300kyr', where='pre')
+    plt.step(h5x[:-1], h5y, alpha=0.5, label='400kyr', where='pre')
+
+
+    plt.title('D_max=40000, tau_a in [68000,100000]')
+    plt.xlabel('t (yr)')
+    plt.ylabel('frac')
+    plt.xlim(0, 800000)
+    plt.yscale('log')
+    plt.legend(loc=1) 
+    plt.show()
+#}}}
+
+

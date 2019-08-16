@@ -9,9 +9,11 @@ from statsmodels.distributions.empirical_distribution import ECDF
 import matplotlib.cm as cm
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from scipy import ndimage
+from matplotlib import cm
+from matplotlib.colors import ListedColormap, LinearSegmentedColormap
 
 # local modules
-from ceti_exp import redux
+from ceti_exp import redux, reddux
 
 
 # Definition of subsamples:
@@ -191,7 +193,7 @@ def fig7(experiment_run, plot_type, param_dmax):
 
     fig, ax = plt.subplots()
 
-    im = ax.imshow(mt, origin='lower', aspect='auto',
+    im = ax.imshow(mt_smoothed, origin='lower', aspect='auto',
             #interpolation='kaiser',
             extent=[Amin,Amax,Smin,Smax],
             vmin=0, vmax=1.,
@@ -415,9 +417,10 @@ def waiting_a_acum_lin(reload=False):
     plt.show()
 #}}}
 
-def waiting_a_dif_log(reload=False):
+def waiting_a_dif_ylog(reload=False):
     #{{{
 
+    global res1, res2, res3, res4, res5, res6
     if(reload):
         D = pandas.read_csv('../dat/SKRU_07/params_SKRU_07.csv')
 
@@ -439,7 +442,7 @@ def waiting_a_dif_log(reload=False):
         res5 = reddux(D[ls5])
         res6 = reddux(D[ls6])
 
-    #bins = np.linspace(0,900000, 100, endpoint=False)
+    #bins = np.linspace(0,900000, 50, endpoint=False)
     bins=np.linspace(0,900, 50, endpoint=False)**2
     h1y , h1x  = np.histogram(res1['w'], bins=bins)
     h2y , h2x  = np.histogram(res2['w'], bins=bins)
@@ -448,21 +451,34 @@ def waiting_a_dif_log(reload=False):
     h5y , h5x  = np.histogram(res5['w'], bins=bins)
     h6y , h6x  = np.histogram(res6['w'], bins=bins)
 
-    plt.step(h1x[:-1], h1y, alpha=0.5, label='tau_a=8000  ', where='pre')
-    plt.step(h2x[:-1], h2y, alpha=0.5, label='28000 ', where='pre')
-    plt.step(h3x[:-1], h3y, alpha=0.5, label='48000 ', where='pre')
-    plt.step(h4x[:-1], h4y, alpha=0.5, label='68000 ', where='pre')
-    plt.step(h5x[:-1], h5y, alpha=0.5, label='108000', where='pre')
-    plt.step(h6x[:-1], h6y, alpha=0.5, label='188000', where='pre')
+    v = ['tomato', 'coral', 'dimgray', 'dodgerblue', 'steelblue', 'navy']
+    v=['black','navy','mediumblue','steelblue','cadetblue','darkcyan','seagreen']
+    #v=viridis(range(24))
+
+    plt.step(h1x[:-1],h1y,alpha=0.4,color=v[0], linewidth=3.2, 
+            label='8000',   where='post')                                   
+    plt.step(h2x[:-1],h2y,alpha=0.5,color=v[1], linewidth=2.8, 
+            label='28000 ', where='post')                                   
+    plt.step(h3x[:-1],h3y,alpha=0.6,color=v[2], linewidth=2.4, 
+            label='48000 ', where='post')                                   
+    plt.step(h4x[:-1],h4y,alpha=0.7,color=v[3], linewidth=1.8, 
+            label='68000 ', where='post')                                   
+    plt.step(h5x[:-1],h5y,alpha=0.8,color=v[4], linewidth=1.4, 
+            label='108000', where='post')                                   
+    plt.step(h6x[:-1],h6y,alpha=0.9,color=v[5], linewidth=1.0, 
+            label='188000', where='post')
 
 
     plt.title('D_max=40000, tau_s in [170000, 240000]')
     plt.xlabel('t (yr)')
     plt.ylabel('frac')
-    plt.xlim(0, 800000)
+    plt.xlim(-10000, 800000)
     plt.yscale('log')
-    plt.legend(loc=1) 
+    plt.legend(loc=1, title='tau_a parameter') 
+    plt.tight_layout(pad=0.4, w_pad=0.5, h_pad=1.0)
     plt.show()
+
+
 #}}}
 
 
@@ -554,9 +570,10 @@ def waiting_s_acum_lin(reload=False):
 #}}}
 
 
-def waiting_s_dif(reload=False):
+def waiting_s_dif_ylog(reload=False):
     #{{{
 
+    global res1, res2, res3, res4, res5, res6
     if(reload):
         D = pandas.read_csv('../dat/SKRU_07/params_SKRU_07.csv')
 
@@ -578,26 +595,30 @@ def waiting_s_dif(reload=False):
 
 
     #bins = np.linspace(0,900000, 100, endpoint=False)
-    bins=np.linspace(0,900, 20, endpoint=False)**2
+    bins=np.linspace(0,900, 40, endpoint=False)**2
     h1y , h1x  = np.histogram(res1['w'], bins=bins)
     h2y , h2x  = np.histogram(res2['w'], bins=bins)
     h3y , h3x  = np.histogram(res3['w'], bins=bins)
     h4y , h4x  = np.histogram(res4['w'], bins=bins)
     h5y , h5x  = np.histogram(res5['w'], bins=bins)
 
-    plt.step(h1x[:-1], h1y, alpha=0.5, label='tau_s=10kyr', where='pre')
-    plt.step(h2x[:-1], h2y, alpha=0.5, label='100kyr', where='pre')
-    plt.step(h3x[:-1], h3y, alpha=0.5, label='200kyr', where='pre')
-    plt.step(h4x[:-1], h4y, alpha=0.5, label='300kyr', where='pre')
-    plt.step(h5x[:-1], h5y, alpha=0.5, label='400kyr', where='pre')
+    v = ['tomato', 'coral', 'dimgray', 'dodgerblue', 'steelblue', 'navy']
+    v=['black','navy','mediumblue','steelblue','cadetblue','darkcyan','seagreen']
+
+    plt.step(h1x[:-1], h1y, alpha=0.5, label='10kyr', color=v[4], linewidth=1.0, where='pre')
+    plt.step(h2x[:-1], h2y, alpha=0.5, label='100kyr',color=v[3], linewidth=1.5, where='pre')
+    plt.step(h3x[:-1], h3y, alpha=0.5, label='200kyr',color=v[2], linewidth=2.0, where='pre')
+    plt.step(h4x[:-1], h4y, alpha=0.5, label='300kyr',color=v[1], linewidth=2.5, where='pre')
+    plt.step(h5x[:-1], h5y, alpha=0.5, label='400kyr',color=v[0], linewidth=3.0, where='pre')
 
 
     plt.title('D_max=40000, tau_a in [68000,100000]')
     plt.xlabel('t (yr)')
     plt.ylabel('frac')
-    plt.xlim(0, 800000)
+    plt.xlim(-10000, 800000)
     plt.yscale('log')
-    plt.legend(loc=1) 
+    plt.tight_layout(pad=0.4, w_pad=0.5, h_pad=1.0)
+    plt.legend(loc=1, title='tau_s parameter') 
     plt.show()
 #}}}
 

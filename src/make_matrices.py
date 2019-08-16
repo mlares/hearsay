@@ -5,6 +5,8 @@ import numpy as np
 from matplotlib import pyplot as plt
 import pandas
 import seaborn as sns
+import sys
+
 
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from ceti_exp import redux, reddux
@@ -159,3 +161,16 @@ for k in range(5):
 
 
 
+
+
+
+
+la = D['tau_awakening'].isin([108000])
+ls = D['tau_survive'].isin([340000])
+ld = D['D_max'].isin([80000])
+l = la & ls & ld
+d = D[l]
+
+for i in range(len(d)):
+    print(i)
+    #r = reddux(d[i])

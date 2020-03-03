@@ -94,8 +94,6 @@ class ccn():
         init: creates a node        
     '''
 
-    import ceti_tools as ct
-
     def __init__(self):
         self.state = 'pre-awakening'
         self.received = 0
@@ -133,37 +131,49 @@ class GalacticNetwork():
         load: 
     '''
 
-    def __init__(self, params):
+    def __init__(self):
         #{{{
         '''
         Instantiate Galaxy object
         '''
-        self.GHZ_inner = params['GHZ_inner']
-        self.GHZ_outer = params['GHZ_outer']
-        self.t_max = params['t_max']
-        self.tau_awakening = params['tau_awakening']
-        self.tau_survive = params['tau_survive']
-        self.D_max = params['D_max']
+        self.params = dict()
+#        self.GHZ_inner = 0.
+#        self.GHZ_outer = 1.
+#        self.t_max = 1.e6
+#        self.tau_awakening = 5000.
+#        self.tau_survive = 5000.
+#        self.D_max = 5000.
         #}}}
 
     def __len__(self):
         return self.ccns
 
     def __repr__(self):
+        print('message')
 
     def __str__(self):
+        print('message')
  
-    def set_params(self, params):
+    def set_parameters(self, params):
         #{{{
         '''
         Set paramenters for the simulation
         '''
-        self.GHZ_inner = params['GHZ_inner']
-        self.GHZ_outer = params['GHZ_outer']
-        self.t_max = params['t_max']
-        self.tau_awakening = params['tau_awakening']
-        self.tau_survive = params['tau_survive']
-        self.D_max = params['D_max']
+        self.params = params  # check if this is a dictionary
+        #}}}
+
+    def load_parameters(self, filename):
+        #{{{
+        '''
+        Parse paramenters for the simulation from a .ini file
+        '''
+
+        import configparser
+        simu_parameters = configparser.ConfigParser()
+        simu_parameters.read(filename)
+
+        self.params = simu_parameters._sections['simu']
+
         #}}}
 
     def show_params(self):
@@ -183,6 +193,12 @@ class GalacticNetwork():
         import numpy as np
         import random
         from scipy import spatial as sp
+
+        # parameters
+        t_max = float(self.params['t_max'])
+        GHZ_inner = str(self.params['GHZ_inner'])
+        GHZ_outer = str(self.params['GHZ_outer'])
+        D_max = float(self.params['D_max'])
 
         random.seed()
         np.random.seed()
@@ -225,10 +241,10 @@ class GalacticNetwork():
                 ID_new = ID_emit
                 ID_next = ID_new + 1
                 t_new_hola = t_now
-        
+
                 # sortear el lugar donde aparece dentro de la GHZ
-                r = np.sqrt(random.random()*self.GHZ_outer**2 + \
-                        self.GHZ_inner**2)
+                r = np.sqrt(random.random()*GHZ_outer**2 + \
+                        GHZ_inner**2)
                 o = random.random()*2.*np.pi
                 x = r * np.cos(o)  # X position on the galactic plane
                 y = r * np.sin(o)  # Y position on the galactic plane

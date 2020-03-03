@@ -1,16 +1,11 @@
 import ccn
+import sys
 
-# In this script we make many simulations of a galaxy filled with MPLs
-# and the correspnding network of contacts.
+inifile = str(sys.argv[1])
 
-import configparser
-simu_parameters = configparser.ConfigParser()
-simu_parameters.read('../set/config.ini')
- 
+G = ccn.GalacticNetwork()
 
-G = ccn.Galaxy()
+G.load_parameters('../set/experiment.ini')
 
-G.set_parameters(simu_parameters)
-
-G.run_experiment()
+G.run_simulation()
 

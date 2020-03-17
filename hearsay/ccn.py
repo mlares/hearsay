@@ -119,6 +119,26 @@ class ccn():
             self.state, self.received, self.delivered)
     #}}}
 
+def check_file(sys_args):
+        import sys
+        from os.path import isfile
+
+        if len(sys_args) == 2:    
+            filename = sys_args[1]
+            if isfile(filename):
+                msg = "Loading configuration parameters from {}"
+                print(msg.format(filename) )
+            else:
+                print("Input argument is not a valid file")
+                raise SystemExit(1) 
+                
+        else:
+            print('Configuration file expected (just 1 argument)')
+            print('example:  python run_correlation.py ../set/config.ini')
+            raise SystemExit(1) 
+        
+        return filename
+
 
 def unwrap_simulation_self(arg, **kwarg):
     return GalacticNetwork.run_simulation(*arg, **kwarg)
@@ -161,18 +181,49 @@ class GalacticNetwork():
         '''
         self.params = params  # check if this is a dictionary
         #}}}
-
-    def load_parameters(self, filename):
+ 
+    def get_parameters(self):
+        #{{{
+        '''
+        Get paramenters for the simulation
+        '''
+        print(self.params)
+        #}}}
+ 
+    def load_parameters(self):
         #{{{
         '''
         Parse paramenters for the simulation from a .ini file
         '''
 
-        import configparser
-        simu_parameters = configparser.ConfigParser()
-        simu_parameters.read(filename)
+        from collections import namedtuple
 
-        self.params = simu_parameters._sections['simu']
+        ghz_inner = float(self.params['simu']['ghz_inner'])
+        ghz_outer = float(self.params['simu']['ghz_outer'])
+        t_max = float(self.params['simu']['t_max'])
+        exp_id = self.params['simu']['exp_id']
+
+        tau_a_min = float(self.params['simu']['tau_a_min']) 
+        tau_a_max = float(self.params['simu']['tau_a_max'])
+        tau_a_nbins = int(self.params['simu']['tau_a_nbins'])
+
+        tau_s_min = float(self.params['simu']['tau_s_min']) 
+        tau_s_max = float(self.params['simu']['tau_s_max'])
+        tau_s_nbins = int(self.params['simu']['tau_s_nbins'])
+
+        d_max = float(self.params['simu']['d_max'])
+        nran = int(self.params['simu']['nran'])
+
+        parset = namedtuple('pars', 'ghz_inner ghz_outer t_max exp_id \
+                tau_a_min tau_a_max tau_a_nbins \
+                tau_s_min tau_s_max tau_s_nbins \
+                d_max nran')
+        res = parset(ghz_inner, ghz_outer, t_max, exp_id, \
+                tau_a_min, tau_a_max, tau_a_nbins, \
+                tau_s_min, tau_s_max, tau_s_nbins, \
+                d_max, nran)
+
+        return(res)
 
         #}}}
 
@@ -188,17 +239,18 @@ class GalacticNetwork():
         #{{{
         '''
         Make experiment
+
+
+        aca corremos un experimento o varios ??????
+
+
         '''
 
         import numpy as np
         import random
         from scipy import spatial as sp
 
-        # parameters
-        t_max = float(self.params['t_max'])
-        GHZ_inner = str(self.params['GHZ_inner'])
-        GHZ_outer = str(self.params['GHZ_outer'])
-        D_max = float(self.params['D_max'])
+        p = self.load_parameters()
 
         random.seed()
         np.random.seed()
@@ -231,7 +283,7 @@ class GalacticNetwork():
         t_forthcoming.add(next_event)
         
         # SIMULATION LOOP OVER TIME
-        while (t_now < t_max):
+        while (t_now < p.t_max):
         
             t_now, ID_emit, ID_hear, case = t_forthcoming.head.getData()
         
@@ -243,8 +295,8 @@ class GalacticNetwork():
                 t_new_hola = t_now
 
                 # sortear el lugar donde aparece dentro de la GHZ
-                r = np.sqrt(random.random()*GHZ_outer**2 + \
-                        GHZ_inner**2)
+                r = np.sqrt(random.random()*p.ghz_outer**2 + \
+                        p.ghz_inner**2)
                 o = random.random()*2.*np.pi
                 x = r * np.cos(o)  # X position on the galactic plane
                 y = r * np.sin(o)  # Y position on the galactic plane

@@ -3,24 +3,28 @@
 
 import ccn
 
- 
-
 # python run_profile.py ../set/config_small.ini
 
 import numpy as np
 import time
 import sys
-from configparser import ConfigParser
+from sys import argv
 
-#_________________________________________
-# Parse parameters from configuration file
 
-filename = ccn.check_file(['','../set/experiment.ini'])
-#filename = ccn.check_file(sys.argv)
-config = ConfigParser()
-config.read(filename)
+conf = ccn.parser()
+conf.check_file(argv)
+conf.read_config_file()
+#conf.load_filenames()
+conf.load_parameters()
+
+print(conf.p.tau_a_nbins)
 
 G = ccn.GalacticNetwork()
-G.set_parameters(config._sections)
 
-G.run_simulation()
+G.run_experiment(conf.p)
+
+
+
+#G.run_simulation(conf.p)
+
+

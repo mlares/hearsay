@@ -4,9 +4,191 @@
 # gossip: galactic observations of signals from intelligent probes
 
 import numpy as np
+from configparser import ConfigParser
 
 # Resources:
 # http://interactivepython.org/courselib/static/pythonds/BasicDS/ImplementinganOrderedList.html
+
+
+class parser(ConfigParser):
+    #{{{
+    """
+    parser class
+    manipulation of parser from ini files
+    """
+    def check_file(self, sys_args):
+        '''
+        chek_file(args): 
+        Parse paramenters for the simulation from a .ini file
+        
+        Args:
+            filename (str): the file name of the map to be read
+
+        Raises:
+
+        Returns:
+            readmap: a healpix map, class ?
+        ''' 
+
+        import sys
+        from os.path import isfile
+    
+        if len(sys_args) == 2:    
+            filename = sys_args[1]
+            if isfile(filename):
+                msg = "Loading configuration parameters from {}"
+                print(msg.format(filename) )
+            else:
+                print("Input argument is not a valid file")
+                print("Using default configuration file instead")
+                filename = '../set/config.ini'
+                #raise SystemExit(1) 
+                
+        else:
+            print('Configuration file expected (just 1 argument)')
+            print('example:  python run_correlation.py ../set/config.ini')
+            print("Using default configuration file")
+            #raise SystemExit(1) 
+            filename = '../set/config.ini'
+    
+        self.filename = filename
+    
+    def read_config_file(self):
+        '''
+        chek_file(args): 
+        Parse paramenters for the simulation from a .ini file
+        
+        Args:
+            filename (str): the file name of the map to be read
+
+        Raises:
+
+        Returns:
+            readmap: a healpix map, class ?
+        ''' 
+
+        import sys
+        from os.path import isfile
+    
+        self.read(self.filename)
+
+    def load_filenames(self):
+        '''
+        load_filenames(self): 
+        make filenames based on info in config file
+        
+        Args:
+            None
+
+        Raises:
+
+        Returns:
+            list of filenames
+        ''' 
+    
+        from collections import namedtuple
+        import numpy as np
+    
+        # Experiment settings
+        #-----------------------
+        
+        exp_id = self['experiment']['exp_id']
+    
+        dir_plots = self['output']['dir_plots'] 
+        dir_output = self['output']['dir_output'] 
+    
+        plot_fname = self['output']['plot_fname'] 
+        plot_ftype = self['output']['plot_ftype'] 
+    
+        fname =  dir_plots + plot_fname + '_' + exp_id + plot_ftype
+
+        names = 'exp_id \
+                 dir_plots \
+                 dir_output \
+                 plot_fname \
+                 plot_ftype \
+                 fname'
+        
+        parset = namedtuple('pars', names)
+    
+        res = parset(exp_id,
+                 dir_plots,
+                 dir_output,
+                 plot_fname,
+                 plot_ftype,
+                 fname) 
+    
+        self.filenames = res
+    
+    def load_parameters(self):
+        '''
+        load_parameters(self): 
+        load parameters from config file
+        
+        Args:
+            None
+
+        Raises:
+
+        Returns:
+            list of parameters as a named tuple
+        
+        ''' 
+        print('loading parameters...')
+        from collections import namedtuple
+        import numpy as np
+         
+        ghz_inner = float(self['simu']['ghz_inner']) 
+        ghz_outer = float(self['simu']['ghz_outer']) 
+                                                                 
+        t_max = float(self['simu']['t_max'])
+                                                                 
+        tau_a_min = float(self['simu']['tau_a_min'])
+        tau_a_max = float(self['simu']['tau_a_max'])
+        tau_a_nbins = int(self['simu']['tau_a_nbins'])
+                                                                 
+        tau_s_min = float(self['simu']['tau_s_min'])
+        tau_s_max = float(self['simu']['tau_s_max'])
+        tau_s_nbins = int(self['simu']['tau_s_nbins'])
+   
+        d_max = float(self['simu']['d_max'])
+        nran = int(self['simu']['nran'])
+
+   
+        # Experiment settings
+        #-----------------------
+        
+        exp_id = self['experiment']['exp_id']
+    
+        dir_plots = self['output']['dir_plots'] 
+        dir_output = self['output']['dir_output'] 
+    
+        plot_fname = self['output']['plot_fname'] 
+        plot_ftype = self['output']['plot_ftype'] 
+    
+        fname =  dir_plots + plot_fname + '_' + exp_id + plot_ftype
+
+        #----
+    
+        names = 'ghz_inner ghz_outer t_max tau_a_min tau_a_max tau_a_nbins \
+        tau_s_min tau_s_max tau_s_nbins d_max nran \
+        exp_id dir_plots dir_output plot_fname plot_ftype fname' 
+        
+        parset = namedtuple('pars', names)
+    
+        res = parset(ghz_inner, ghz_outer, t_max, tau_a_min, tau_a_max, tau_a_nbins, \
+        tau_s_min, tau_s_max, tau_s_nbins, d_max, nran, \
+        exp_id, dir_plots, dir_output, plot_fname, plot_ftype, fname)
+    
+        self.p = res
+
+    def show_params(self):
+        #{{{
+        '''
+        Show paramenters for the simulation
+        '''
+        #}}}
+    #}}}
 
 # NODE AND LINKED LIST CLASSES
 class Node:
@@ -119,25 +301,6 @@ class ccn():
             self.state, self.received, self.delivered)
     #}}}
 
-def check_file(sys_args):
-        import sys
-        from os.path import isfile
-
-        if len(sys_args) == 2:    
-            filename = sys_args[1]
-            if isfile(filename):
-                msg = "Loading configuration parameters from {}"
-                print(msg.format(filename) )
-            else:
-                print("Input argument is not a valid file")
-                raise SystemExit(1) 
-                
-        else:
-            print('Configuration file expected (just 1 argument)')
-            print('example:  python run_correlation.py ../set/config.ini')
-            raise SystemExit(1) 
-        
-        return filename
 
 
 def unwrap_simulation_self(arg, **kwarg):
@@ -174,83 +337,76 @@ class GalacticNetwork():
     def __str__(self):
         print('message')
  
-    def set_parameters(self, params):
+    def run_experiment(self, p):
         #{{{
-        '''
-        Set paramenters for the simulation
-        '''
-        self.params = params  # check if this is a dictionary
-        #}}}
- 
-    def get_parameters(self):
-        #{{{
-        '''
-        Get paramenters for the simulation
-        '''
-        print(self.params)
-        #}}}
- 
-    def load_parameters(self):
-        #{{{
-        '''
-        Parse paramenters for the simulation from a .ini file
-        '''
+        from os import makedirs, path
+        import itertools
+        import pandas
 
-        from collections import namedtuple
+        print(p)
 
-        ghz_inner = float(self.params['simu']['ghz_inner'])
-        ghz_outer = float(self.params['simu']['ghz_outer'])
-        t_max = float(self.params['simu']['t_max'])
-        exp_id = self.params['simu']['exp_id']
+        tau_awakeningS = np.linspace(p.tau_a_min, p.tau_a_max, p.tau_a_nbins)
+        tau_awakeningS = tau_awakeningS[1:]
 
-        tau_a_min = float(self.params['simu']['tau_a_min']) 
-        tau_a_max = float(self.params['simu']['tau_a_max'])
-        tau_a_nbins = int(self.params['simu']['tau_a_nbins'])
+        tau_surviveS = np.linspace(p.tau_s_min, p.tau_s_max, p.tau_s_nbins)
+        tau_surviveS = tau_surviveS[1:]
 
-        tau_s_min = float(self.params['simu']['tau_s_min']) 
-        tau_s_max = float(self.params['simu']['tau_s_max'])
-        tau_s_nbins = int(self.params['simu']['tau_s_nbins'])
+        D_maxS  = [p.d_max]
+        
+        try:
+            dirName = p.dir_output + p.exp_id+''
+            makedirs(dirName)
+            print("Directory " , dirName ,  " Created ")
+        except FileExistsError:
+                print("Directory " , dirName ,  " already exists") 
+        for d in D_maxS:
+            dirName = p.dir_output + p.exp_id + '/D' +str(int(d))
+            try:
+                makedirs(dirName)
+                print("Directory " , dirName ,  " Created ")
+            except FileExistsError:
+                print("Directory " , dirName ,  " already exists")
 
-        d_max = float(self.params['simu']['d_max'])
-        nran = int(self.params['simu']['nran'])
+        df = pandas.DataFrame(columns=['tau_awakening','tau_survive','D_max','name'])
 
-        parset = namedtuple('pars', 'ghz_inner ghz_outer t_max exp_id \
-                tau_a_min tau_a_max tau_a_nbins \
-                tau_s_min tau_s_max tau_s_nbins \
-                d_max nran')
-        res = parset(ghz_inner, ghz_outer, t_max, exp_id, \
-                tau_a_min, tau_a_max, tau_a_nbins, \
-                tau_s_min, tau_s_max, tau_s_nbins, \
-                d_max, nran)
+        k=0; l=0
+        for tau_awakening, tau_survive, D_max in itertools.product(tau_awakeningS, tau_surviveS, D_maxS):
 
-        return(res)
+           pars = [tau_awakening, tau_survive, D_max]
+           print(tau_awakening, tau_survive, D_max)
+           k+=1; i=0 
+           for experiment in range(p.nran):
 
-        #}}}
+               i+=1; l+=1
 
-    def show_params(self):
-        #{{{
-        '''
-        Show paramenters for the simulation
-        '''
+               dirName = '../dat/'+p.exp_id + '/D' +str(int(D_max))+'/'
+               filename = dirName + str(k).zfill(5) + '_' + str(i).zfill(3) + '.dat'
+               if(path.isfile(filename)): continue
+
+               self.run_simulation(p, pars)
+
+           #    CETIs = ceti_exp(*e)
+           #    df.loc[l] = [tau_awakening, tau_survive, D_max, filename]
+           #    pickle.dump( CETIs, open( filename, "wb" ) )
+
+        #df.to_csv('../dat/' + exp_ID + '/params.csv', index=False) 
+
         #}}}
 
-
-    def run_simulation(self):
+    def run_simulation(self, p, pars):
         #{{{
         '''
         Make experiment
-
-
-        aca corremos un experimento o varios ??????
-
+        (single value of parameters)
 
         '''
+        tau_awakening = pars[0]
+        tau_survive = pars[1]
+        D_max = pars[2]
 
         import numpy as np
         import random
         from scipy import spatial as sp
-
-        p = self.load_parameters()
 
         random.seed()
         np.random.seed()
@@ -302,7 +458,7 @@ class GalacticNetwork():
                 y = r * np.sin(o)  # Y position on the galactic plane
         
                 # sortear el tiempo de actividad
-                t_new_active = np.random.exponential(self.tau_survive, 1)[0]
+                t_new_active = np.random.exponential(tau_survive, 1)[0]
                 t_new_chau = t_new_hola + t_new_active
         
                 # agregar el tiempo de desaparición a la lista de tiempos
@@ -315,9 +471,9 @@ class GalacticNetwork():
                     (ID_new, ID_new, x, y, t_new_hola, t_new_chau))
         
                 # sortear el tiempo de aparición de la próxima CETI
-                t_next_awakening = np.random.exponential(self.tau_awakening, 1)[0]
+                t_next_awakening = np.random.exponential(tau_awakening, 1)[0]
                 t_next_awakening = t_new_hola + t_next_awakening
-                if t_next_awakening < t_max:
+                if t_next_awakening < p.t_max:
                     next_event = [t_next_awakening, ID_next, None, 1]
                     t_forthcoming.add(next_event)
         
@@ -326,7 +482,7 @@ class GalacticNetwork():
                     # if there are other MPL, compute contacts:
                     # encontrar todas (los IDs de) las MPL dentro del radio D_max
                     query_point = [x, y]
-                    idx = tree.query_ball_point(query_point, r=self.D_max)
+                    idx = tree.query_ball_point(query_point, r=D_max)
         
                     # traverse all MPL within reach
                     for k in idx:

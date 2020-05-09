@@ -3,7 +3,7 @@
 
 import ccn
 
-# python run_profile.py ../set/config_small.ini
+# python run_profile.py ../set/experiment.ini
 
 import numpy as np
 import time
@@ -24,7 +24,10 @@ G = ccn.GalacticNetwork()
 G.run_experiment(conf.p)
 
 
-
-#G.run_simulation(conf.p)
+# tau_awakening = 20000
+# tau_survive = 20000
+# D_max = 20000
+# pars = [tau_awakening, tau_survive, D_max]
+# G.run_simulation(conf.p, pars)
 
 

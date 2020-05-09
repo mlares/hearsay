@@ -27,7 +27,6 @@ class parser(ConfigParser):
         Raises:
 
         Returns:
-            readmap: a healpix map, class ?
         ''' 
 
         import sys
@@ -41,15 +40,15 @@ class parser(ConfigParser):
             else:
                 print("Input argument is not a valid file")
                 print("Using default configuration file instead")
-                filename = '../set/config.ini'
+                filename = '../set/experiment.ini'
                 #raise SystemExit(1) 
                 
         else:
             print('Configuration file expected (just 1 argument)')
-            print('example:  python run_correlation.py ../set/config.ini')
+            print('example:  python run_correlation.py ../set/experiment.ini')
             print("Using default configuration file")
             #raise SystemExit(1) 
-            filename = '../set/config.ini'
+            filename = '../set/experiment.ini'
     
         self.filename = filename
     
@@ -59,12 +58,10 @@ class parser(ConfigParser):
         Parse paramenters for the simulation from a .ini file
         
         Args:
-            filename (str): the file name of the map to be read
 
         Raises:
 
         Returns:
-            readmap: a healpix map, class ?
         ''' 
 
         import sys
@@ -151,7 +148,10 @@ class parser(ConfigParser):
         tau_s_max = float(self['simu']['tau_s_max'])
         tau_s_nbins = int(self['simu']['tau_s_nbins'])
    
-        d_max = float(self['simu']['d_max'])
+        d_max_min = float(self['simu']['d_max_min'])
+        d_max_max = float(self['simu']['d_max_max'])
+        d_max_nbins = int(self['simu']['d_max_nbins'])
+
         nran = int(self['simu']['nran'])
 
    
@@ -171,13 +171,14 @@ class parser(ConfigParser):
         #----
     
         names = 'ghz_inner ghz_outer t_max tau_a_min tau_a_max tau_a_nbins \
-        tau_s_min tau_s_max tau_s_nbins d_max nran \
+        tau_s_min tau_s_max tau_s_nbins d_max_min d_max_max d_max_nbins nran \
         exp_id dir_plots dir_output plot_fname plot_ftype fname' 
         
         parset = namedtuple('pars', names)
     
         res = parset(ghz_inner, ghz_outer, t_max, tau_a_min, tau_a_max, tau_a_nbins, \
-        tau_s_min, tau_s_max, tau_s_nbins, d_max, nran, \
+        tau_s_min, tau_s_max, tau_s_nbins, d_max_min, d_max_max,
+        d_max_nbins, nran, \
         exp_id, dir_plots, dir_output, plot_fname, plot_ftype, fname)
     
         self.p = res
@@ -339,20 +340,30 @@ class GalacticNetwork():
  
     def run_experiment(self, p):
         #{{{
+        '''
+        Make experiment
+        (single value of parameters)
+        Writes output on a file
+         
+        Args:
+            p (tuple): A named tuple containing all parameters for the
+            simulation
+
+        Raises:
+
+        Returns:
+            None
+
+        '''
         from os import makedirs, path
         import itertools
         import pandas
-
-        print(p)
+        import pickle
 
         tau_awakeningS = np.linspace(p.tau_a_min, p.tau_a_max, p.tau_a_nbins)
-        tau_awakeningS = tau_awakeningS[1:]
-
         tau_surviveS = np.linspace(p.tau_s_min, p.tau_s_max, p.tau_s_nbins)
-        tau_surviveS = tau_surviveS[1:]
+        D_maxS = np.linspace(p.d_max_min, p.d_max_max, p.d_max_nbins) 
 
-        D_maxS  = [p.d_max]
-        
         try:
             dirName = p.dir_output + p.exp_id+''
             makedirs(dirName)
@@ -379,15 +390,14 @@ class GalacticNetwork():
 
                i+=1; l+=1
 
-               dirName = '../dat/'+p.exp_id + '/D' +str(int(D_max))+'/'
-               filename = dirName + str(k).zfill(5) + '_' + str(i).zfill(3) + '.dat'
+               dirName = p.dir_output+p.exp_id + '/D' +str(int(D_max))+'/'
+               filename = dirName + str(k).zfill(5) + '_' + str(i).zfill(3) + '.pk'
                if(path.isfile(filename)): continue
 
                self.run_simulation(p, pars)
 
-           #    CETIs = ceti_exp(*e)
-           #    df.loc[l] = [tau_awakening, tau_survive, D_max, filename]
-           #    pickle.dump( CETIs, open( filename, "wb" ) )
+               df.loc[l] = [tau_awakening, tau_survive, D_max, filename]
+               pickle.dump( self.MPL, open( filename, "wb" ) )
 
         #df.to_csv('../dat/' + exp_ID + '/params.csv', index=False) 
 
@@ -398,6 +408,15 @@ class GalacticNetwork():
         '''
         Make experiment
         (single value of parameters)
+         
+        Args:
+            p ():
+            pars ():
+
+        Raises:
+
+        Returns:
+            list of parameters as a named tuple           
 
         '''
         tau_awakening = pars[0]
@@ -764,8 +783,9 @@ class GalacticNetwork():
                 
         #}}}
      
-    def ShowCETIs(CETIs):
+    def ShowCETIs(self):
         #{{{
+        CETIs = self.MPL
         for i in range(len(CETIs)):
             print('%2d         (%5.0f, %5.0f) yr      <%5.0f, %5.0f> lyr' %
                      (CETIs[i][0][1], CETIs[i][0][4],
@@ -780,6 +800,18 @@ class GalacticNetwork():
                 print('%2d sees %2d (%5.0f, %5.0f) yr      <%5.0f, %5.0f> lyr distance=%f' % (CETIs[i][l+1][0], CETIs[i][l+1][1], CETIs[i][l+1][4], CETIs[i][l+1][5], CETIs[i][l+1][2], CETIs[i][l+1][3], Dx))
 
         #}}}
+
+    def WriteCETIs(self):
+        #{{{
+        CETIs = self.MPL
+
+        df.loc[l] = [tau_awakening, tau_survive, D_max, filename]
+        pickle.dump( CETIs, open( filename, "wb" ) )
+
+        #df.to_csv('../dat/' + exp_ID + '/params.csv', index=False) 
+
+
+       #}}}
 
     #}}}
 

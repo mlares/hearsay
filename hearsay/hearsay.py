@@ -1,34 +1,30 @@
+"""Summary line.
 
-# pensar un nombre para el proyecto
-
-# gossip: galactic observations of signals from intelligent probes
+Description
+"""
 
 import numpy as np
 from configparser import ConfigParser
 
-# Resources:
-# http://interactivepython.org/courselib/static/pythonds/BasicDS/ImplementinganOrderedList.html
-
 
 class parser(ConfigParser):
-    # {{{
-    """
-    parser class
+    """parser class.
+
     manipulation of parser from ini files
     """
+
     def check_file(self, sys_args):
-        '''
-        chek_file(args):
-        Parse paramenters for the simulation from a .ini file
+        """Parse paramenters for the simulation from a .ini file.
 
         Args:
             filename (str): the file name of the map to be read
 
         Raises:
+            None
 
         Returns:
-        '''
-
+            None
+        """
         from os.path import isfile
 
         if len(sys_args) == 2:
@@ -52,43 +48,37 @@ class parser(ConfigParser):
         self.filename = filename
 
     def read_config_file(self):
-        '''
-        chek_file(args):
-        Parse paramenters for the simulation from a .ini file
-
-        Args:
-
-        Raises:
-
-        Returns:
-        '''
-
-        self.read(self.filename)
-
-    def load_filenames(self):
-        '''
-        load_filenames(self):
-        make filenames based on info in config file
+        """Parse paramenters for the simulation from a .ini file.
 
         Args:
             None
 
         Raises:
+            None
+
+        Returns:
+            None
+        """
+        self.read(self.filename)
+
+    def load_filenames(self):
+        """Make filenames based on info in config file.
+
+        Args:
+            None
+
+        Raises:
+            None
 
         Returns:
             list of filenames
-        '''
-
+        """
         from collections import namedtuple
 
         # Experiment settings
-        # -----------------------
-
         exp_id = self['experiment']['exp_id']
-
         dir_plots = self['output']['dir_plots']
         dir_output = self['output']['dir_output']
-
         plot_fname = self['output']['plot_fname']
         plot_ftype = self['output']['plot_ftype']
 
@@ -113,19 +103,17 @@ class parser(ConfigParser):
         self.filenames = res
 
     def load_parameters(self):
-        '''
-        load_parameters(self):
-        load parameters from config file
+        """Load parameters from config file.
 
         Args:
             None
 
         Raises:
+            None
 
         Returns:
             list of parameters as a named tuple
-
-        '''
+        """
         print('loading parameters...')
         from collections import namedtuple
 
@@ -149,19 +137,12 @@ class parser(ConfigParser):
         nran = int(self['simu']['nran'])
 
         # Experiment settings
-        # -----------------------
-
         exp_id = self['experiment']['exp_id']
-
         dir_plots = self['output']['dir_plots']
         dir_output = self['output']['dir_output']
-
         plot_fname = self['output']['plot_fname']
         plot_ftype = self['output']['plot_ftype']
-
         fname = dir_plots + plot_fname + '_' + exp_id + plot_ftype
-
-        # ----
 
         names = 'ghz_inner ghz_outer t_max tau_a_min tau_a_max tau_a_nbins \
         tau_s_min tau_s_max tau_s_nbins d_max_min d_max_max d_max_nbins nran \
@@ -178,40 +159,68 @@ class parser(ConfigParser):
 
         self.p = res
 
-    def show_params(self):
-        # {{{
-        '''
-        Show paramenters for the simulation
-        '''
-        # }}}
-    # }}}
 
-
-# NODE AND LINKED LIST CLASSES
 class Node:
-    # {{{
+    """NODE AND LINKED LIST CLASSES.
+
+    Contains tools to init, getdata, getnext and setnext
+    """
+
     def __init__(self, data):
+        """Initialize.
+
+        Args:
+            data
+        """
         self.data = data
         self.next = None
 
     def getData(self):
+        """Get data in a node.
+
+        Args:
+            None
+        """
         return self.data
 
     def getNext(self):
+        """Get the next node, if exists.
+
+        Args:
+            None
+        """
         return self.next
 
     def setNext(self, newnext):
+        """Set the next node.
+
+        Args:
+            Node
+        """
         self.next = newnext
-    # }}}
 
 
 class OrderedList:
-    # {{{
+    """ORDERED LIST CLASS.
+
+    Tools to make ordered lists
+    """
+
     def __init__(self):
+        """Initialize ordered list.
+
+        Args:
+            None
+        """
         self.head = None
         self.last = None
 
     def show(self):
+        """Print an ordered list.
+
+        Args:
+            None
+        """
         state = ['awakening', 'doomsday', 'contact ', 'blackout']
         current = self.head
         while current is not None:
@@ -228,11 +237,14 @@ class OrderedList:
                              current.getData()[1],
                              current.getData()[2]]))
 
-#            print(current.getData())
-
             current = current.getNext()
 
     def add(self, data):
+        """Add an element to an ordered list.
+
+        Args:
+            Data
+        """
         current = self.head
         previous = None
         stop = False
@@ -251,30 +263,48 @@ class OrderedList:
             previous.setNext(temp)
 
     def remove_first(self):
+        """Remove first element.
+
+        Args:
+            None
+        """
         self.head = self.head.getNext()
 
     def isEmpty(self):
+        """Ask if list is empty.
+
+        Args:
+            None
+        """
         return self.head is None
 
     def size(self):
+        """Retrieve the size of the list.
+
+        Args:
+            None
+        """
         current = self.head
         count = 0
         while current is not None:
             count = count + 1
             current = current.getNext()
         return count
-    # }}}
 
 
 class ccn():
-    # {{{
-    '''
-    class ccn: causal contact node
+    """Class for causal contact nodes.
+
     methods:
         init: creates a node
-    '''
+    """
 
     def __init__(self):
+        """Initialize.
+
+        Args:
+            None
+        """
         self.state = 'pre-awakening'
         self.received = 0
         self.delivered = 0
@@ -285,37 +315,56 @@ class ccn():
         self.n_listened = 0.
 
     def __len__(self):
+        """Get the number of contacts for this node.
+
+        Args:
+            None
+        """
         return self.received
 
     def __repr__(self):
+        """Representation for print.
+
+        Args:
+            None
+        """
         return 'Causal contact node in state {!s}, having\
                 {!i} received signals and {!i} times listened'.format(
             self.state, self.received, self.delivered)
 
     def __str__(self):
+        """Show the node as a string.
+
+        Args:
+            None
+        """
         return 'Causal contact node in state {!s}, having\
                 {!i} received signals and {!i} times listened'.format(
             self.state, self.received, self.delivered)
-    # }}}
 
 
 def unwrap_simulation_self(arg, **kwarg):
+    """Wrap the serial function for parallel run.
+
+    This function just call the serialized version, but allows to run
+    it concurrently.
+    """
     return GalacticNetwork.run_simulation(*arg, **kwarg)
 
 
 class GalacticNetwork():
-    # {{{
-    '''
-    class GalacticNetwork: network of contacts from CCNs.
+    """GalacticNetwork: network of contacts from CCNs.
+
     methods:
         load:
-    '''
+    """
 
     def __init__(self):
-        # {{{
-        '''
-        Instantiate Galaxy object
-        '''
+        """Instantiate Galaxy object.
+
+        Args:
+            None
+        """
         self.params = dict()
 #        self.GHZ_inner = 0.
 #        self.GHZ_outer = 1.
@@ -323,22 +372,35 @@ class GalacticNetwork():
 #        self.tau_awakening = 5000.
 #        self.tau_survive = 5000.
 #        self.D_max = 5000.
-        # }}}
 
     def __len__(self):
+        """Return the number of contacts.
+
+        Args:
+            None
+        """
         return self.ccns
 
     def __repr__(self):
+        """Represent with a string.
+
+        Args:
+            None
+        """
         print('message')
 
     def __str__(self):
+        """Represent with a string.
+
+        Args:
+            None
+        """
         print('message')
 
     def run_experiment(self, p):
-        # {{{
-        '''
-        Make experiment
-        (single value of parameters)
+        """Make experiment.
+
+        Requires a single value of parameters.
         Writes output on a file
 
         Args:
@@ -346,11 +408,11 @@ class GalacticNetwork():
             simulation
 
         Raises:
+            None
 
         Returns:
             None
-
-        '''
+        """
         from os import makedirs, path
         import itertools
         import pandas
@@ -378,7 +440,7 @@ class GalacticNetwork():
                                        'D_max', 'name'])
 
         k = 0
-        l = 0
+        j = 0
         itt = itertools.product(tau_awakeningS, tau_surviveS, D_maxS)
         for tau_awakening, tau_survive, D_max in itt:
 
@@ -389,7 +451,7 @@ class GalacticNetwork():
             for experiment in range(p.nran):
 
                 i += 1
-                l += 1
+                j += 1
 
                 dirName = p.dir_output+p.exp_id + '/D' + str(int(D_max))+'/'
                 filename = dirName + str(k).zfill(5) + '_'
@@ -399,29 +461,26 @@ class GalacticNetwork():
 
                 self.run_simulation(p, pars)
 
-                df.loc[l] = [tau_awakening, tau_survive, D_max, filename]
+                df.loc[j] = [tau_awakening, tau_survive, D_max, filename]
                 pickle.dump(self.MPL, open(filename, "wb"))
 
         # df.to_csv('../dat/' + exp_ID + '/params.csv', index=False)
 
-        # }}}
-
     def run_simulation(self, p, pars):
-        # {{{
-        '''
-        Make experiment
-        (single value of parameters)
+        """Make experiment.
+
+        A single value of parameters
 
         Args:
             p ():
             pars ():
 
         Raises:
+            None
 
         Returns:
             list of parameters as a named tuple
-
-        '''
+        """
         tau_awakening = pars[0]
         tau_survive = pars[1]
         D_max = pars[2]
@@ -442,19 +501,17 @@ class GalacticNetwork():
 
         # inicializacion del tiempo: scalar
         t_now = 0
-        # inicializacion del ID: index
-        ID = 0
 
         # lista de tiempos de eventos futuros: ordered list
         # [time, ID_emit, ID_receive, case]
         t_forthcoming = OrderedList()
 
         # estructura de arbol para buscar vecinos
-        try:
-            tree = 0
-            del tree
-        except NameError:
-            pass
+        if 'tree' in locals():
+            try:
+                del tree
+            except NameError:
+                pass
 
         # INITIALIZATION
         # Simulation starts when the first CETI appears:
@@ -505,7 +562,13 @@ class GalacticNetwork():
                     # if there are other MPL, compute contacts:
                     # encontrar todas (los IDs de) las MPL dentro de D_max
                     query_point = [x, y]
-                    idx = tree.query_ball_point(query_point, r=D_max)
+                    if 'tree' in locals():
+                        try:
+                            idx = tree.query_ball_point(query_point, r=D_max)
+                        except NameError:
+                            pass
+                    else:
+                        idx = []
 
                     # traverse all MPL within reach
                     for k in idx:
@@ -606,39 +669,40 @@ class GalacticNetwork():
             # t_forthcoming.show()
 
             self.MPL = MPL
-        # }}}
 
     def run_simulation_II(self, Nrealizations, njobs):
-        # {{{
-        """run_simulation_II(self) : computes the simulations
-        in parallel.
+        """Compute the simulations in parallel.
 
         Tasks:
         1. traverse all ccns?
 
         Args:
+            Nrealizations: the number of realizations
+            njobs: the number of jobs
 
         Raises:
             errors?
 
         Returns:
+            None
         """
         from joblib import Parallel, delayed
 
         results = []
 
-        results = Parallel(n_jobs=njobs, verbose=5, backend="threading")\
-            (delayed(unwrap_simulation_self)(i)
-             for i in zip([self]*len(Nrealizations), Nrealizations))
+        z = zip([self]*len(Nrealizations), Nrealizations)
+
+        Pll = Parallel(n_jobs=njobs, verbose=5, backend="threading")
+
+        results = Pll(delayed(unwrap_simulation_self)(i) for i in z)
+
         return results
-        # }}}
 
-    def redux(D):
-        # {{{
-        '''
-        redux experiment
-        '''
+    def redux(slef, D):
+        """Redux experiment results.
 
+        Reads result files and make plots.
+        """
         import pickle
         import numpy as np
         index = []
@@ -709,14 +773,11 @@ class GalacticNetwork():
                x,           # x position in the galaxy
                y)           # y position in the galaxy
 
-        # }}}
-
     def reddux(D):
-        # {{{
-        '''
-        reddux experiment
-        '''
+        """Reddux experiment.
 
+        Similar to previous
+        """
         import pickle
         import numpy as np
         index = []
@@ -795,10 +856,12 @@ class GalacticNetwork():
                # chosen integer bins in multiplicity
                'count': count})  # distribution of the multiplicity of contacts
 
-        # }}}
-
     def ShowCETIs(self):
-        # {{{
+        """Show simulation results.
+
+        Args:
+            None
+        """
         CETIs = self.MPL
         for i in range(len(CETIs)):
             print('%2d         (%5.0f, %5.0f) yr      <%5.0f, %5.0f> lyr' %
@@ -818,7 +881,3 @@ class GalacticNetwork():
                                                          CETIs[i][l+1][5],
                                                          CETIs[i][l+1][2],
                                                          CETIs[i][l+1][3], Dx))
-
-        # }}}
-
-    # }}}

@@ -37,7 +37,7 @@ API
 .. toctree::
    :maxdepth: 2
 
-   api/ccn
+   api/hearsay
    api/gettingstarted
    api/testing
    api/todo

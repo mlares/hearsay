@@ -1,13 +1,14 @@
 # %load_ext autoreload
 # %autoreload 2
 
-import ccn
-
-# python run_profile.py ../set/experiment.ini
+import hearsay
+'''
+python run_profile.py ../set/experiment.ini
+'''
 
 from sys import argv
 
-conf = ccn.parser()
+conf = hearsay.parser()
 conf.check_file(argv)
 conf.read_config_file()
 # conf.load_filenames()
@@ -15,7 +16,7 @@ conf.load_parameters()
 
 print(conf.p.tau_a_nbins)
 
-G = ccn.GalacticNetwork()
+G = hearsay.GalacticNetwork()
 
 G.run_experiment(conf.p)
 

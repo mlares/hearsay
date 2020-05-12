@@ -13,7 +13,7 @@ class parser(ConfigParser):
     manipulation of parser from ini files
     """
 
-    def check_file(self, sys_args):
+    def check_file(self, sys_args=""):
         """Parse paramenters for the simulation from a .ini file.
 
         Args:
@@ -37,12 +37,10 @@ class parser(ConfigParser):
                 print("Input argument is not a valid file")
                 print("Using default configuration file instead")
                 filename = '../set/experiment.ini'
-                # raise SystemExit(1)
         else:
             print('Configuration file expected (just 1 argument)')
             print('example:  python run_correlation.py ../set/experiment.ini')
             print("Using default configuration file")
-            # raise SystemExit(1)
             filename = '../set/experiment.ini'
 
         self.filename = filename

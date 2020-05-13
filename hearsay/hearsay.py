@@ -14,6 +14,23 @@ class parser(ConfigParser):
 
     manipulation of parser from ini files
     """
+    def __init__(self, args=None):
+        """Initialize a parser.
+
+        Args:
+            None
+        Returns:
+            None
+        Raises:
+            None
+        """    
+        
+        super().__init__()
+        self.check_file(args)
+        self.read_config_file()
+
+        self.load_filenames()
+        self.load_parameters()
 
     def check_file(self, sys_args=""):
         """Parse paramenters for the simulation from a .ini file.
@@ -29,18 +46,37 @@ class parser(ConfigParser):
         """
         from os.path import isfile
 
-        if len(sys_args) == 2:
-            filename = sys_args[1]
+        if isinstance(sys_args, str):
 
             if isfile(filename):
                 msg = "Loading configuration parameters from {}"
                 print(msg.format(filename))
+                filename = sys_args
             else:
                 print("Input argument is not a valid file")
                 print("Using default configuration file instead")
+                filename = '../set/experiment.ini'                      
+
+        elif isinstance(sys_args, list): 
+
+            if len(sys_args) == 2:
+                filename = sys_args[1]
+
+                if isfile(filename):
+                    msg = "Loading configuration parameters from {}"
+                    print(msg.format(filename))
+                else:
+                    print("Input argument is not a valid file")
+                    print("Using default configuration file instead")
+                    filename = '../set/experiment.ini'
+            else:
+                print('Configuration file expected: filename or CLI input')
+                print('example:  python run_correlation.py ../set/experiment.ini')
+                print("Using default configuration file")
                 filename = '../set/experiment.ini'
+
         else:
-            print('Configuration file expected (just 1 argument)')
+            print('Configuration file expected: filename or CLI input')
             print('example:  python run_correlation.py ../set/experiment.ini')
             print("Using default configuration file")
             filename = '../set/experiment.ini'
@@ -397,9 +433,8 @@ class GalacticNetwork():
         Args:
             None
         """
-        self.params = dict()
+        self.param_set = dict()
         self.conf = conf
-        self.params = None
 
     def __len__(self):
         """Return the number of contacts.
@@ -492,7 +527,7 @@ class GalacticNetwork():
 
                 pickle.dump(self.MPL, open(filename, "wb"))
 
-        self.params = df
+        self.param_set = df
 
         fn = self.conf.filenames
         fname = fn.dir_output + '/' + fn.exp_id
@@ -703,7 +738,7 @@ class GalacticNetwork():
 
             self.MPL = MPL
 
-    def run_simulation_II(self, Nrealizations, njobs):
+    def run_simulation_II(self, p, pars, Nrealizations, njobs):
         """Compute the simulations in parallel.
 
         Tasks:
@@ -731,6 +766,35 @@ class GalacticNetwork():
 
         return results
 
+    
+    def show_single_ccns(self):
+        """Show simulation results.
+
+        Args:
+            None
+        """
+
+        CETIs = self.MPL
+
+        for i in range(len(CETIs)):
+            print('%2d         (%5.0f, %5.0f) yr      <%5.0f, %5.0f> lyr' %
+                  (CETIs[i][0][1], CETIs[i][0][4],
+                   CETIs[i][0][5], CETIs[i][0][2], CETIs[i][0][3]))
+
+            k = len(CETIs[i]) - 1
+            for j in range(k):
+                Dx = np.sqrt(((
+                    np.array(CETIs[i][0][2:4]) -
+                    np.array(CETIs[i][j+1][2:4]))**2).sum())
+
+                print('%2d sees %2d (%5.0f, %5.0f) yr      \
+                      <%5.0f, %5.0f> lyr distance=%f' % (CETIs[i][j+1][0],
+                                                         CETIs[i][j+1][1],
+                                                         CETIs[i][j+1][4],
+                                                         CETIs[i][j+1][5],
+                                                         CETIs[i][j+1][2],
+                                                         CETIs[i][j+1][3], Dx))
+
 
 class results():
     """results: load and visualize results from simulations and experiments.
@@ -738,25 +802,27 @@ class results():
     description
     """
 
-    def __init__(self, GalNet):
+    def __init__(self, conf=None):
         """Instantiate a results object.
 
         Args:
             GalNet (GalacticNetwork class)
         """
+        # super().__init__()
         self.params = dict()
-        self.fn = GalNet.conf.filenames
-        self.G = GalNet
+        self.conf = conf
 
     def load(self):
         """Load parameter set and data.
 
         Load all data generated from an experiment.
         """
-        fname = self.fn.dir_output + self.fn.exp_id
-        fname = fname + '/' + self.fn.pars_root + '.csv'
+        fn = self.conf.filenames
+        fname = fn.dir_output + fn.exp_id
+        fname = fname + '/' + fn.pars_root + '.csv'
         df = pd.read_csv(fname)
         self.params = df
+
 
     def redux(self):
         """Reddux experiment.
@@ -843,6 +909,145 @@ class results():
                #
                # chosen integer bins in multiplicity
                'count': count})  # distribution of the multiplicity of contacts
+
+
+HASTA ACA HICE.  AHORA ARMAR REDUX2
+
+
+    def redux2(self):
+        """Reddux experiment.
+
+        Similar to previous
+        """
+        import pickle
+        import numpy as np
+
+        p = self.conf.p
+        tau_awakeningS = np.linspace(p.tau_a_min, p.tau_a_max, p.tau_a_nbins)
+        tau_surviveS = np.linspace(p.tau_s_min, p.tau_s_max, p.tau_s_nbins)
+        D_maxS = np.linspace(p.d_max_min, p.d_max_max, p.d_max_nbins)  
+
+        # 
+        # N1 = len(tau_awakeningS)
+        # N2 = len(tau_surviveS)
+
+        # m1_d1=np.zeros((N1,N2))
+        # m1_d2=np.zeros((N1,N2))
+        # m1_d3=np.zeros((N1,N2))
+        # m1_d4=np.zeros((N1,N2))
+        # m2_d1=np.zeros((N1,N2))
+        # m2_d2=np.zeros((N1,N2))
+        # m2_d3=np.zeros((N1,N2))
+        # m2_d4=np.zeros((N1,N2))
+
+        # l0_d1 = D['D_max']==
+        # l0_d2 = D['D_max']==10000.
+        # l0_d3 = D['D_max']==40000.
+        # l0_d4 = D['D_max']==80000.
+
+        # toolbar_width = 40
+
+        # for i, a in enumerate(A):
+        #     print("%2.2d/%2.2d" % (i, N1))
+        #     l1 = D['tau_awakening']==a
+
+
+        #     sys.stdout.write("[%s]" % (" " * toolbar_width))
+        #     sys.stdout.flush()
+        #     sys.stdout.write("\b" * (toolbar_width+1))
+        #     for j, s in enumerate(S):
+        #         sys.stdout.write("-")
+        #         sys.stdout.flush()
+
+        #         l2 = D['tau_survive']==s
+
+        #         l = l0_d1 & l1 & l2
+        #         D_d1 = D[l]
+
+        #         l = l0_d2 & l1 & l2
+        #         D_d2 = D[l]
+
+        #         l = l0_d3 & l1 & l2
+        #         D_d3 = D[l]
+
+        #         l = l0_d4 & l1 & l2
+        #         D_d4 = D[l]
+
+
+        #         if len(D_d1)>0:
+        #             awaken, inbox, distancias, hangon, waiting, count, index,\
+        #             firstc, ncetis, x, y = redux(D_d1)
+        #             m1_d1[i][j] = inbox.count(0)/max(len(inbox), 1)
+        #             m2_d1[i][j] = firstc.count(0.)/max(len(firstc),1)
+        #         else:
+        #             m1_d1[i][j] = 0.
+        #             m2_d1[i][j] = 0.
+        #  
+
+        #         if len(D_d2)>0:
+        #             awaken, inbox, distancias, hangon, waiting, count, index,\
+        #             firstc, ncetis, x, y = redux(D_d2)
+        #             m1_d2[i][j] = inbox.count(0)/max(len(inbox), 1)
+        #             m2_d2[i][j] = firstc.count(0.)/max(len(firstc),1)
+        #         else:
+        #             m1_d2[i][j] = 0.
+        #             m2_d2[i][j] = 0.      
+
+        #  
+        #         if len(D_d3)>0:
+        #             awaken, inbox, distancias, hangon, waiting, count, index,\
+        #             firstc, ncetis, x, y = redux(D_d3)
+        #             m1_d3[i][j] = inbox.count(0)/max(len(inbox), 1)
+        #             m2_d3[i][j] = firstc.count(0.)/max(len(firstc),1)
+        #         else:
+        #             m1_d3[i][j] = 0.
+        #             m2_d3[i][j] = 0.      
+        #  
+
+        #         if len(D_d4)>0:
+        #             awaken, inbox, distancias, hangon, waiting, count, index,\
+        #             firstc, ncetis, x, y = redux(D_d4)
+        #             m1_d4[i][j] = inbox.count(0)/max(len(inbox), 1)
+        #             m2_d4[i][j] = firstc.count(0.)/max(len(firstc),1)
+        #         else:
+        #             m1_d4[i][j] = 0.
+        #             m2_d4[i][j] = 0.      
+
+        #     sys.stdout.write("]\n") # this ends the progress bar
+        #  
+        # # end: for i, a in enumerate(A)
+
+
+
+        # m1_d1 = np.transpose(m1_d1)
+        # m2_d1 = np.transpose(m2_d1)
+
+        # m1_d2 = np.transpose(m1_d2)
+        # m2_d2 = np.transpose(m2_d2)
+
+        # m1_d3 = np.transpose(m1_d3)
+        # m2_d3 = np.transpose(m2_d3)
+
+        # m1_d4 = np.transpose(m1_d4)
+        # m2_d4 = np.transpose(m2_d4)
+
+
+        # pickle.dump( m1_d1, open('../dat/SKRU_07/matrix1_d1_SKRU_07.pkl', 'wb'))
+        # pickle.dump( m1_d2, open('../dat/SKRU_07/matrix1_d2_SKRU_07.pkl', 'wb'))
+        # pickle.dump( m1_d3, open('../dat/SKRU_07/matrix1_d3_SKRU_07.pkl', 'wb'))
+        # pickle.dump( m1_d4, open('../dat/SKRU_07/matrix1_d4_SKRU_07.pkl', 'wb'))
+
+        # pickle.dump( m2_d1, open('../dat/SKRU_07/matrix2_d1_SKRU_07.pkl', 'wb'))
+        # pickle.dump( m2_d2, open('../dat/SKRU_07/matrix2_d2_SKRU_07.pkl', 'wb'))
+        # pickle.dump( m2_d3, open('../dat/SKRU_07/matrix2_d3_SKRU_07.pkl', 'wb'))
+        # pickle.dump( m2_d4, open('../dat/SKRU_07/matrix2_d4_SKRU_07.pkl', 'wb'))
+
+
+
+                                                     
+
+
+
 
     def show_ccns(self, i):
         """Show simulation results.

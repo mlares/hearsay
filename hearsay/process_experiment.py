@@ -1,4 +1,5 @@
 import hearsay
+import pandas
 from sys import argv
 
 conf = hearsay.parser()
@@ -8,5 +9,13 @@ conf.load_filenames()
 conf.load_parameters()
 
 G = hearsay.GalacticNetwork(conf)
+R = hearsay.results(G)
+R.load()
+res = R.redux()
 
-G.run_experiment()
+
+# Mostrar una simulacion en particular:
+# R.show_ccns(2)
+
+# VER: make_matrices y plots en plt
+

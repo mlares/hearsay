@@ -1,10 +1,12 @@
-"""Summary line.
+"""HEARSAY.
 
-Description
+description
 """
 
 import numpy as np
 from configparser import ConfigParser
+import pandas as pd
+import pickle
 
 
 class parser(ConfigParser):
@@ -76,6 +78,7 @@ class parser(ConfigParser):
         # Experiment settings
         exp_id = self['experiment']['exp_id']
         dir_plots = self['output']['dir_plots']
+        pars_root = self['output']['pars_root']
         dir_output = self['output']['dir_output']
         plot_fname = self['output']['plot_fname']
         plot_ftype = self['output']['plot_ftype']
@@ -85,6 +88,7 @@ class parser(ConfigParser):
         names = 'exp_id \
                  dir_plots \
                  dir_output \
+                 pars_root \
                  plot_fname \
                  plot_ftype \
                  fname'
@@ -94,6 +98,7 @@ class parser(ConfigParser):
         res = parset(exp_id,
                      dir_plots,
                      dir_output,
+                     pars_root,
                      plot_fname,
                      plot_ftype,
                      fname)
@@ -138,13 +143,14 @@ class parser(ConfigParser):
         exp_id = self['experiment']['exp_id']
         dir_plots = self['output']['dir_plots']
         dir_output = self['output']['dir_output']
+        pars_root = self['output']['pars_root']
         plot_fname = self['output']['plot_fname']
         plot_ftype = self['output']['plot_ftype']
         fname = dir_plots + plot_fname + '_' + exp_id + plot_ftype
 
         names = 'ghz_inner ghz_outer t_max tau_a_min tau_a_max tau_a_nbins \
         tau_s_min tau_s_max tau_s_nbins d_max_min d_max_max d_max_nbins nran \
-        exp_id dir_plots dir_output plot_fname plot_ftype fname'
+        exp_id dir_plots dir_output pars_root plot_fname plot_ftype fname'
 
         parset = namedtuple('pars', names)
 
@@ -152,23 +158,32 @@ class parser(ConfigParser):
                      tau_a_nbins,
                      tau_s_min, tau_s_max, tau_s_nbins, d_max_min, d_max_max,
                      d_max_nbins, nran,
-                     exp_id, dir_plots, dir_output,
+                     exp_id, dir_plots, dir_output, pars_root,
                      plot_fname, plot_ftype, fname)
 
         self.p = res
 
 
 class Node:
-    """NODE AND LINKED LIST CLASSES.
+    """Node and linked list classes.
 
-    Contains tools to init, getdata, getnext and setnext
+    This class contains tools to manipulate nodes.  A node is
+    a point in the Galaxy that a acquires the ability to emit
+    and receive messages at a given time.  A set of nodes make
+    a linked list.
     """
 
     def __init__(self, data):
-        """Initialize.
+        """Initialize a node.
 
         Args:
-            data
+            data: (single value)
+            A number or value that can be compared and supports
+            the <grater than> operator.
+        Returns:
+            None
+        Raises:
+            None
         """
         self.data = data
         self.next = None
@@ -199,9 +214,10 @@ class Node:
 
 
 class OrderedList:
-    """ORDERED LIST CLASS.
+    """Ordered list class.
 
-    Tools to make ordered lists
+    Tools to make ordered lists. This structure is useful because it can be
+    traversed and a new node can be added at any stage.
     """
 
     def __init__(self):
@@ -241,7 +257,7 @@ class OrderedList:
         """Add an element to an ordered list.
 
         Args:
-            Data
+            Data (number)
         """
         current = self.head
         previous = None
@@ -294,7 +310,14 @@ class ccn():
     """Class for causal contact nodes.
 
     methods:
-        init: creates a node
+        init:
+            creates a node
+        __len__:
+            None
+        __repr__:
+            None
+        __str__:
+            None
     """
 
     def __init__(self):
@@ -354,22 +377,29 @@ class GalacticNetwork():
     """GalacticNetwork: network of contacts from CCNs.
 
     methods:
-        load:
+        init:
+            creates a node
+        __len__:
+            None
+        __repr__:
+            None
+        __str__:
+            None
+        run_experiment:
+            None
+        run_simulation:
+            None
     """
 
-    def __init__(self):
+    def __init__(self, conf=None):
         """Instantiate Galaxy object.
 
         Args:
             None
         """
         self.params = dict()
-#        self.GHZ_inner = 0.
-#        self.GHZ_outer = 1.
-#        self.t_max = 1.e6
-#        self.tau_awakening = 5000.
-#        self.tau_survive = 5000.
-#        self.D_max = 5000.
+        self.conf = conf
+        self.params = None
 
     def __len__(self):
         """Return the number of contacts.
@@ -395,7 +425,7 @@ class GalacticNetwork():
         """
         print('message')
 
-    def run_experiment(self, p):
+    def run_experiment(self):
         """Make experiment.
 
         Requires a single value of parameters.
@@ -414,8 +444,8 @@ class GalacticNetwork():
         from os import makedirs, path
         import itertools
         import pandas
-        import pickle
 
+        p = self.conf.p
         tau_awakeningS = np.linspace(p.tau_a_min, p.tau_a_max, p.tau_a_nbins)
         tau_surviveS = np.linspace(p.tau_s_min, p.tau_s_max, p.tau_s_nbins)
         D_maxS = np.linspace(p.d_max_min, p.d_max_max, p.d_max_nbins)
@@ -454,15 +484,20 @@ class GalacticNetwork():
                 dirName = p.dir_output+p.exp_id + '/D' + str(int(D_max))+'/'
                 filename = dirName + str(k).zfill(5) + '_'
                 filename = filename + str(i).zfill(3) + '.pk'
+                df.loc[j] = [tau_awakening, tau_survive, D_max, filename]
                 if(path.isfile(filename)):
                     continue
 
                 self.run_simulation(p, pars)
 
-                df.loc[j] = [tau_awakening, tau_survive, D_max, filename]
                 pickle.dump(self.MPL, open(filename, "wb"))
 
-        # df.to_csv('../dat/' + exp_ID + '/params.csv', index=False)
+        self.params = df
+
+        fn = self.conf.filenames
+        fname = fn.dir_output + '/' + fn.exp_id
+        fname = fname + '/' + fn.pars_root + '.csv'
+        df.to_csv(fname, index=False)
 
     def run_simulation(self, p, pars):
         """Make experiment.
@@ -696,88 +731,43 @@ class GalacticNetwork():
 
         return results
 
-    def redux(slef, D):
-        """Redux experiment results.
 
-        Reads result files and make plots.
+class results():
+    """results: load and visualize results from simulations and experiments.
+
+    description
+    """
+
+    def __init__(self, GalNet):
+        """Instantiate a results object.
+
+        Args:
+            GalNet (GalacticNetwork class)
         """
-        import pickle
-        import numpy as np
-        index = []
-        firstc = []
-        ncetis = []
-        awaken = []      # lapso de tiempo que esta activa
-        waiting = []     # lapso de tiempo que espera hasta el primer contacto
-        inbox = []       # cantidad de cetis que esta escuchando
-        distancias = []  # distancias a las cetis contactadas
-        hangon = []      # lapso de tiempo que esta escuchando otra CETI
-        x = []
-        y = []
-        N = len(D)
-        kcross = 0
+        self.params = dict()
+        self.fn = GalNet.conf.filenames
+        self.G = GalNet
 
-        for filename in D['name']:
+    def load(self):
+        """Load parameter set and data.
 
-            try:
-                CETIs = pickle.load(open(filename, "rb"))
-            except EOFError:
-                CETIs = []
+        Load all data generated from an experiment.
+        """
+        fname = self.fn.dir_output + self.fn.exp_id
+        fname = fname + '/' + self.fn.pars_root + '.csv'
+        df = pd.read_csv(fname)
+        self.params = df
 
-            M = len(CETIs)
-            ncetis.append(M)
-
-            for i in range(M):  # experiments
-
-                k = len(CETIs[i])  # CETIs resulting from the experiment
-                inbox.append(k-1)
-                awaken.append(CETIs[i][0][5] - CETIs[i][0][4])
-                index.append(kcross)
-                x.append(CETIs[i][0][2])
-                y.append(CETIs[i][0][3])
-
-                firstcontact = 1.e8
-
-                for l in range(1, k):  # traverse contacts
-
-                    earlier = CETIs[i][l][4] - CETIs[i][0][4]
-                    firstcontact = min(earlier, firstcontact)
-                    Dx = np.sqrt(((
-                        np.array(CETIs[i][0][2:4]) -
-                        np.array(CETIs[i][l][2:4]))**2).sum())
-
-                    waiting.append(earlier)
-                    distancias.append(Dx)
-                    hangon.append(CETIs[i][l][5] - CETIs[i][l][4])
-
-                if k > 1:
-                    firstc.append(firstcontact)
-
-            kcross += 1
-
-        N = 12
-        count = [0]*N
-        for i in range(N):
-            count[i] = inbox.count(i)
-
-        return(awaken,      # lifetime of the CETI
-               inbox,       # number of contact a single CETI makes
-               distancias,  # distance between communicating CETIs
-               hangon,      # duration of the contact
-               waiting,     # time elapsed from awakening to contact
-               count,       # distribution of the multiplicity of contacts
-               index,       # ID if the CETI in the simulation run
-               firstc,      # time of the first contact (from awakening)
-               ncetis,      # total number of CETIs in each simulated points
-               x,           # x position in the galaxy
-               y)           # y position in the galaxy
-
-    def reddux(D):
+    def redux(self):
         """Reddux experiment.
 
         Similar to previous
         """
         import pickle
         import numpy as np
+
+        D = self.params
+
         index = []
         firstc = []
         ncetis = []
@@ -812,17 +802,17 @@ class GalacticNetwork():
 
                 firstcontact = 1.e8
 
-                for l in range(1, k):  # traverse contacts
+                for j in range(1, k):  # traverse contacts
 
-                    earlier = CETIs[i][l][4] - CETIs[i][0][4]
+                    earlier = CETIs[i][j][4] - CETIs[i][0][4]
                     firstcontact = min(earlier, firstcontact)
                     Dx = np.sqrt(((
                         np.array(CETIs[i][0][2:4]) -
-                        np.array(CETIs[i][l][2:4]))**2).sum())
+                        np.array(CETIs[i][j][2:4]))**2).sum())
 
                     waiting.append(earlier)
                     distancias.append(Dx)
-                    hangon.append(CETIs[i][l][5] - CETIs[i][l][4])
+                    hangon.append(CETIs[i][j][5] - CETIs[i][j][4])
 
                 if k > 1:
                     firstc.append(firstcontact)
@@ -854,28 +844,33 @@ class GalacticNetwork():
                # chosen integer bins in multiplicity
                'count': count})  # distribution of the multiplicity of contacts
 
-    def ShowCETIs(self):
+    def show_ccns(self, i):
         """Show simulation results.
 
         Args:
             None
         """
-        CETIs = self.MPL
+        filename = self.params.loc[i][3]
+        try:
+            CETIs = pickle.load(open(filename, "rb"))
+        except EOFError:
+            CETIs = []
+
         for i in range(len(CETIs)):
             print('%2d         (%5.0f, %5.0f) yr      <%5.0f, %5.0f> lyr' %
                   (CETIs[i][0][1], CETIs[i][0][4],
                    CETIs[i][0][5], CETIs[i][0][2], CETIs[i][0][3]))
 
             k = len(CETIs[i]) - 1
-            for l in range(k):
+            for j in range(k):
                 Dx = np.sqrt(((
                     np.array(CETIs[i][0][2:4]) -
-                    np.array(CETIs[i][l+1][2:4]))**2).sum())
+                    np.array(CETIs[i][j+1][2:4]))**2).sum())
 
                 print('%2d sees %2d (%5.0f, %5.0f) yr      \
-                      <%5.0f, %5.0f> lyr distance=%f' % (CETIs[i][l+1][0],
-                                                         CETIs[i][l+1][1],
-                                                         CETIs[i][l+1][4],
-                                                         CETIs[i][l+1][5],
-                                                         CETIs[i][l+1][2],
-                                                         CETIs[i][l+1][3], Dx))
+                      <%5.0f, %5.0f> lyr distance=%f' % (CETIs[i][j+1][0],
+                                                         CETIs[i][j+1][1],
+                                                         CETIs[i][j+1][4],
+                                                         CETIs[i][j+1][5],
+                                                         CETIs[i][j+1][2],
+                                                         CETIs[i][j+1][3], Dx))

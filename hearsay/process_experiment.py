@@ -11,11 +11,12 @@ R = hearsay.results(conf)
 
 R.load()
 
+res = R.redux2()
 
 
-# res = R.redux()
-# 
-# 
+
+ 
+ 
 # # Mostrar una simulacion en particular:
 # # R.show_ccns(2)
 # 

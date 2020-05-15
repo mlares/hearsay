@@ -7,6 +7,7 @@ import numpy as np
 from configparser import ConfigParser
 import pandas as pd
 import pickle
+import sys
 
 
 class parser(ConfigParser):
@@ -910,10 +911,6 @@ class results():
                # chosen integer bins in multiplicity
                'count': count})  # distribution of the multiplicity of contacts
 
-
-HASTA ACA HICE.  AHORA ARMAR REDUX2
-
-
     def redux2(self):
         """Reddux experiment.
 
@@ -922,67 +919,58 @@ HASTA ACA HICE.  AHORA ARMAR REDUX2
         import pickle
         import numpy as np
 
+        # parameters
         p = self.conf.p
         tau_awakeningS = np.linspace(p.tau_a_min, p.tau_a_max, p.tau_a_nbins)
         tau_surviveS = np.linspace(p.tau_s_min, p.tau_s_max, p.tau_s_nbins)
         D_maxS = np.linspace(p.d_max_min, p.d_max_max, p.d_max_nbins)  
 
-        # 
-        # N1 = len(tau_awakeningS)
-        # N2 = len(tau_surviveS)
+        A = tau_awakeningS
+        S = tau_surviveS
 
-        # m1_d1=np.zeros((N1,N2))
-        # m1_d2=np.zeros((N1,N2))
-        # m1_d3=np.zeros((N1,N2))
-        # m1_d4=np.zeros((N1,N2))
-        # m2_d1=np.zeros((N1,N2))
-        # m2_d2=np.zeros((N1,N2))
-        # m2_d3=np.zeros((N1,N2))
-        # m2_d4=np.zeros((N1,N2))
+        N1 = len(tau_awakeningS)
+        N2 = len(tau_surviveS)
 
-        # l0_d1 = D['D_max']==
-        # l0_d2 = D['D_max']==10000.
-        # l0_d3 = D['D_max']==40000.
-        # l0_d4 = D['D_max']==80000.
+        m1_d1=np.zeros((N1,N2))
+        m1_d2=np.zeros((N1,N2))
+        m1_d3=np.zeros((N1,N2))
+        m1_d4=np.zeros((N1,N2))
+        m2_d1=np.zeros((N1,N2))
+        m2_d2=np.zeros((N1,N2))
+        m2_d3=np.zeros((N1,N2))
+        m2_d4=np.zeros((N1,N2))
 
-        # toolbar_width = 40
+        l0_d1 = self.params['D_max']==self.params['D_max'][0]
 
-        # for i, a in enumerate(A):
-        #     print("%2.2d/%2.2d" % (i, N1))
-        #     l1 = D['tau_awakening']==a
+        toolbar_width = 40
 
+        print(self.params.keys())
 
-        #     sys.stdout.write("[%s]" % (" " * toolbar_width))
-        #     sys.stdout.flush()
-        #     sys.stdout.write("\b" * (toolbar_width+1))
-        #     for j, s in enumerate(S):
-        #         sys.stdout.write("-")
-        #         sys.stdout.flush()
+        for i, a in enumerate(A):
+            print("%2.2d/%2.2d" % (i, N1))
+            l1 = self.params['tau_awakening']==a
 
-        #         l2 = D['tau_survive']==s
+            sys.stdout.write("[%s]" % (" " * toolbar_width))
+            sys.stdout.flush()
+            sys.stdout.write("\b" * (toolbar_width+1))
+            for j, s in enumerate(S):
+                sys.stdout.write("-")
+                sys.stdout.flush()
 
-        #         l = l0_d1 & l1 & l2
-        #         D_d1 = D[l]
+                l2 = self.params['tau_survive']==s
 
-        #         l = l0_d2 & l1 & l2
-        #         D_d2 = D[l]
+                l = l0_d1 & l1 & l2
+                D_d1 = self.params[l]
 
-        #         l = l0_d3 & l1 & l2
-        #         D_d3 = D[l]
-
-        #         l = l0_d4 & l1 & l2
-        #         D_d4 = D[l]
-
-
-        #         if len(D_d1)>0:
-        #             awaken, inbox, distancias, hangon, waiting, count, index,\
-        #             firstc, ncetis, x, y = redux(D_d1)
-        #             m1_d1[i][j] = inbox.count(0)/max(len(inbox), 1)
-        #             m2_d1[i][j] = firstc.count(0.)/max(len(firstc),1)
-        #         else:
-        #             m1_d1[i][j] = 0.
-        #             m2_d1[i][j] = 0.
-        #  
+                if len(D_d1)>0:
+                    awaken, inbox, distancias, hangon, waiting, count, index,\
+                    firstc, ncetis, x, y = redux(D_d1)
+                    m1_d1[i][j] = inbox.count(0)/max(len(inbox), 1)
+                    m2_d1[i][j] = firstc.count(0.)/max(len(firstc),1)
+                else:
+                    m1_d1[i][j] = 0.
+                    m2_d1[i][j] = 0.
+         
 
         #         if len(D_d2)>0:
         #             awaken, inbox, distancias, hangon, waiting, count, index,\
@@ -1013,8 +1001,8 @@ HASTA ACA HICE.  AHORA ARMAR REDUX2
         #             m1_d4[i][j] = 0.
         #             m2_d4[i][j] = 0.      
 
-        #     sys.stdout.write("]\n") # this ends the progress bar
-        #  
+            sys.stdout.write("]\n") # this ends the progress bar
+          
         # # end: for i, a in enumerate(A)
 
 

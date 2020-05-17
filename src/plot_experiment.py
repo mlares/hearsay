@@ -1,5 +1,4 @@
-import hearsay
-import pandas
+from hearsay import hearsay
 import pickle
 from sys import argv
 import numpy as np
@@ -147,7 +146,7 @@ divider = make_axes_locatable(ax)
 cax = divider.append_axes('right', size='2%', pad=0.05)
 fig.colorbar(im, cax=cax, orientation='vertical')
 plt.tight_layout()
- 
+
 plt.tight_layout(pad=0.4, w_pad=0.5, h_pad=1.0)
 plt.rcParams['legend.fontsize'] = 20
 plt.rcParams['lines.linewidth'] = 2
@@ -158,12 +157,6 @@ plt.rcParams['figure.figsize'] = [12, 12]
 plt.rcParams['font.monospace'] = 'DejaVu Sans Mono'
 fig.savefig('../plt/plot_M2.png', format='png') 
 
-
-
-
 # PLOT INBOX **********************************************************
 
-
 res = R.redux_2d()
-
-

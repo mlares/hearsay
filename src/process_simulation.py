@@ -1,4 +1,4 @@
-import hearsay
+from hearsay import hearsay
 import pandas
 from sys import argv
 

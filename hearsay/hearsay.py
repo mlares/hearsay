@@ -368,6 +368,8 @@ class OrderedList:
 
     Tools to make ordered lists. This structure is useful because it can be
     traversed and a new node can be added at any stage.
+    # based on http://interactivepython.org/courselib/static/pythonds/
+    #  BasicDS/ImplementinganOrderedList.html
     """
 
     def __init__(self):

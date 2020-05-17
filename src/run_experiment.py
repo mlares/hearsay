@@ -1,4 +1,4 @@
-import hearsay
+from hearsay import hearsay
 from sys import argv
 
 if len(argv) > 1:

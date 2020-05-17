@@ -1,29 +1,21 @@
-# %load_ext autoreload
-# %autoreload 2
-
 import hearsay
-'''
-python run_profile.py ../set/experiment.ini
-'''
-
 from sys import argv
 
-conf = hearsay.parser()
-conf.check_file(argv)
-conf.read_config_file()
-conf.load_filenames()
-conf.load_parameters()
+conf = hearsay.parser(argv, nran=100)
 
-G = hearsay.GalacticNetwork()
+G = hearsay.GalacticNetwork(conf)
 
 tau_awakening = 20000
 tau_survive = 20000
 D_max = 20000
 pars = [tau_awakening, tau_survive, D_max]
-G.run_simulation(conf.p, pars)
 
-G.run_simulation_II(conf.p, pars, 10, 2)
+G.run_experiment(spars=pars)
 
-G.show_single_ccns()
 
+#G.run_simulation(conf.p, pars)
+#MPL1 = G.MPL
+
+
+#G.run_simulation_II(conf.p, pars, 10, 1)
 

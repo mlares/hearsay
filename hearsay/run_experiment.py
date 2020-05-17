@@ -7,4 +7,5 @@ else:
     conf = hearsay.parser()
 
 G = hearsay.GalacticNetwork(conf)
-G.run_experiment()
+
+G.run_experiment(parallel=conf.p.run_parallel)

@@ -27,6 +27,9 @@ MANIFEST
 # local output directories
 out/
 
+# local data files
+*.pk
+*.csv 
 
 # PyInstaller
 #  Usually these files are written by a python script from a template

@@ -8,6 +8,7 @@ from configparser import ConfigParser
 import pandas as pd
 import pickle
 import sys
+from tqdm import tqdm
 
 
 class parser(ConfigParser):
@@ -15,7 +16,8 @@ class parser(ConfigParser):
 
     manipulation of parser from ini files
     """
-    def __init__(self, args=None):
+
+    def __init__(self, argv=None, *args, **kwargs):
         """Initialize a parser.
 
         Args:
@@ -24,14 +26,15 @@ class parser(ConfigParser):
             None
         Raises:
             None
-        """    
-        
+        """
         super().__init__()
-        self.check_file(args)
+        self.message = None
+        self.check_file(argv)
         self.read_config_file()
 
         self.load_filenames()
-        self.load_parameters()
+        self.load_parameters(*args, **kwargs)
+        self.check_settings()
 
     def check_file(self, sys_args=""):
         """Parse paramenters for the simulation from a .ini file.
@@ -47,39 +50,38 @@ class parser(ConfigParser):
         """
         from os.path import isfile
 
+        mess = ("Configuration file expected:"
+                "\n\t filename or CLI input"
+                "\n\t example:  python run_correlation.py"
+                "\n\t ../set/experiment.ini"
+                "\n\t Using default configuration file")
         if isinstance(sys_args, str):
-
-            if isfile(filename):
-                msg = "Loading configuration parameters from {}"
-                print(msg.format(filename))
+            if isfile(sys_args):
+                msg = f"Loading configuration parameters from {sys_args}"
+                self.message = msg
                 filename = sys_args
             else:
-                print("Input argument is not a valid file")
-                print("Using default configuration file instead")
-                filename = '../set/experiment.ini'                      
+                self.message = "Input argument is not a valid file\
+                                Using default configuration file instead"
+                filename = '../set/experiment.ini'
 
-        elif isinstance(sys_args, list): 
+        elif isinstance(sys_args, list):
 
             if len(sys_args) == 2:
                 filename = sys_args[1]
 
                 if isfile(filename):
-                    msg = "Loading configuration parameters from {}"
-                    print(msg.format(filename))
+                    msg = f"Loading configuration parameters from {filename}"
+                    self.message = msg
                 else:
-                    print("Input argument is not a valid file")
-                    print("Using default configuration file instead")
+                    self.message = mess
                     filename = '../set/experiment.ini'
             else:
-                print('Configuration file expected: filename or CLI input')
-                print('example:  python run_correlation.py ../set/experiment.ini')
-                print("Using default configuration file")
+                self.message = mess
                 filename = '../set/experiment.ini'
 
         else:
-            print('Configuration file expected: filename or CLI input')
-            print('example:  python run_correlation.py ../set/experiment.ini')
-            print("Using default configuration file")
+            self.message = mess
             filename = '../set/experiment.ini'
 
         self.filename = filename
@@ -116,6 +118,7 @@ class parser(ConfigParser):
         exp_id = self['experiment']['exp_id']
         dir_plots = self['output']['dir_plots']
         pars_root = self['output']['pars_root']
+        progress_root = self['output']['progress_root']
         dir_output = self['output']['dir_output']
         plot_fname = self['output']['plot_fname']
         plot_ftype = self['output']['plot_ftype']
@@ -126,6 +129,7 @@ class parser(ConfigParser):
                  dir_plots \
                  dir_output \
                  pars_root \
+                 progress_root \
                  plot_fname \
                  plot_ftype \
                  fname'
@@ -136,13 +140,14 @@ class parser(ConfigParser):
                      dir_plots,
                      dir_output,
                      pars_root,
+                     progress_root,
                      plot_fname,
                      plot_ftype,
                      fname)
 
         self.filenames = res
 
-    def load_parameters(self):
+    def load_parameters(self, nran=None):
         """Load parameters from config file.
 
         Args:
@@ -154,7 +159,17 @@ class parser(ConfigParser):
         Returns:
             list of parameters as a named tuple
         """
-        print('loading parameters...')
+        choice = self['UX']['verbose']
+        if choice.lower() in 'yesitrue':
+            verbose = True
+        elif choice.lower() in 'nofalse':
+            verbose = False
+        else:
+            print('warning in .ini file: UX: verbose')
+            verbose = False
+
+        if verbose:
+            print('loading parameters...')
         from collections import namedtuple
 
         ghz_inner = float(self['simu']['ghz_inner'])
@@ -174,10 +189,22 @@ class parser(ConfigParser):
         d_max_max = float(self['simu']['d_max_max'])
         d_max_nbins = int(self['simu']['d_max_nbins'])
 
-        nran = int(self['simu']['nran'])
+        if nran is None:
+            nran = int(self['simu']['nran'])
+
+        choices = self['simu']['run_parallel']
+        if choices.lower() in 'yesitrue':
+            run_parallel = True
+        elif choices.lower() in 'nofalse':
+            run_parallel = False
+        else:
+            print('Error in .ini file: simu: run_parallel must be Y/N'
+                  'Exiting.')
+            exit()
 
         # Experiment settings
         exp_id = self['experiment']['exp_id']
+        njobs = int(self['simu']['njobs'])
         dir_plots = self['output']['dir_plots']
         dir_output = self['output']['dir_output']
         pars_root = self['output']['pars_root']
@@ -185,20 +212,106 @@ class parser(ConfigParser):
         plot_ftype = self['output']['plot_ftype']
         fname = dir_plots + plot_fname + '_' + exp_id + plot_ftype
 
-        names = 'ghz_inner ghz_outer t_max tau_a_min tau_a_max tau_a_nbins \
-        tau_s_min tau_s_max tau_s_nbins d_max_min d_max_max d_max_nbins nran \
-        exp_id dir_plots dir_output pars_root plot_fname plot_ftype fname'
+        choice = self['UX']['show_progress']
+        if choice.lower() in 'yesitrue':
+            showp = True
+        elif choice.lower() in 'nofalse':
+            showp = False
+        else:
+            print('warning in .ini file: UX: show_progress')
+            showp = False
+
+        string_overwrite = self['output']['clobber']
+        if string_overwrite.lower() in 'yesitrue':
+            overwrite = True
+        elif string_overwrite.lower() in 'nofalse':
+            overwrite = False
+        else:
+            print('warning in .ini file: output: clobber')
+            overwrite = False
+
+        names = ['ghz_inner',
+                 'ghz_outer',
+                 't_max',
+                 'tau_a_min',
+                 'tau_a_max',
+                 'tau_a_nbins',
+                 'tau_s_min',
+                 'tau_s_max',
+                 'tau_s_nbins',
+                 'd_max_min',
+                 'd_max_max',
+                 'd_max_nbins',
+                 'nran',
+                 'run_parallel',
+                 'njobs',
+                 'exp_id',
+                 'dir_plots',
+                 'dir_output',
+                 'pars_root',
+                 'plot_fname',
+                 'plot_ftype',
+                 'fname',
+                 'showp',
+                 'overwrite',
+                 'verbose']
+        names = ' '.join(names)
 
         parset = namedtuple('pars', names)
 
-        res = parset(ghz_inner, ghz_outer, t_max, tau_a_min, tau_a_max,
+        res = parset(ghz_inner,
+                     ghz_outer,
+                     t_max,
+                     tau_a_min,
+                     tau_a_max,
                      tau_a_nbins,
-                     tau_s_min, tau_s_max, tau_s_nbins, d_max_min, d_max_max,
-                     d_max_nbins, nran,
-                     exp_id, dir_plots, dir_output, pars_root,
-                     plot_fname, plot_ftype, fname)
+                     tau_s_min,
+                     tau_s_max,
+                     tau_s_nbins,
+                     d_max_min,
+                     d_max_max,
+                     d_max_nbins,
+                     nran,
+                     run_parallel,
+                     njobs,
+                     exp_id,
+                     dir_plots,
+                     dir_output,
+                     pars_root,
+                     plot_fname,
+                     plot_ftype,
+                     fname,
+                     showp,
+                     overwrite,
+                     verbose)
 
         self.p = res
+
+    def check_settings(self):
+        """Check if parameters make sense.
+
+        Args:
+            None
+
+        Raises:
+            None
+
+        Returns:
+            Exception if settings have inconsistencies.
+        """
+        from os import path
+        from sys import exit
+
+        if self.p.verbose:
+            print(self.message)
+
+        if not path.isdir(self.p.dir_output):
+            print(f"Directory {self.p.dir_output} does not exist")
+            exit('Exit with error code 004801')
+
+        if not path.isdir(self.p.dir_plots):
+            print(f"Directory {self.p.dir_plots} does not exist")
+            exit('Exit with error code 003901')
 
 
 class Node:
@@ -401,13 +514,13 @@ class ccn():
             self.state, self.received, self.delivered)
 
 
-def unwrap_simulation_self(arg, **kwarg):
+def unwrap_experiment_self(arg, **kwarg):
     """Wrap the serial function for parallel run.
 
     This function just call the serialized version, but allows to run
     it concurrently.
     """
-    return GalacticNetwork.run_simulation(*arg, **kwarg)
+    return GalacticNetwork.run_experiment_params(*arg, **kwarg)
 
 
 class GalacticNetwork():
@@ -461,7 +574,100 @@ class GalacticNetwork():
         """
         print('message')
 
-    def run_experiment(self):
+    def run_experiment(self, spars=None,
+                       A=None, S=None, D=None,
+                       parallel=False, njobs=None):
+        """Run an experiment.
+
+        An experiment requires a set of at least three parameters, which are
+        taken from the configuration file.
+
+        Args:
+           A (number or list of numbers, optional)
+           D (number or list of numbers, optional)
+           S (number or list of numbers, optional)
+           parallel (boolean, optional). Flag to indicate if run is made using
+           the parallelized version.  Default: False.
+        """
+        import itertools
+        p = self.conf.p
+        if spars is None:
+            tau_awakeningS = np.linspace(p.tau_a_min, p.tau_a_max,
+                                         p.tau_a_nbins)
+            tau_surviveS = np.linspace(p.tau_s_min, p.tau_s_max, p.tau_s_nbins)
+            D_maxS = np.linspace(p.d_max_min, p.d_max_max, p.d_max_nbins)
+        else:
+            tau_awakeningS = [spars[0]]
+            tau_surviveS = [spars[1]]
+            D_maxS = [spars[2]]
+
+        if A is not None:
+            tau_awakeningS = A
+        if S is not None:
+            tau_surviveS = S
+        if D is not None:
+            D_maxS = D
+
+        if njobs is not None:
+            parallel = True
+
+        ll = []
+        for i in itertools.product(tau_awakeningS, tau_surviveS, D_maxS):
+            ll.append(i)
+
+        if parallel:
+            if njobs is None:
+                njobs = self.conf.p.njobs
+            self.run_experiment_params_II(ll, njobs)
+        else:
+            self.run_experiment_param_set(ll)
+
+    def run_experiment_params_II(self, params, njobs):
+        """Run an experiment, parallel version.
+
+        An experiment requires a set of at least three parameters, which are
+        taken from the configuration file.
+
+        Args:
+        params: the parameters
+        njobs: number of jobs
+        """
+        import pandas
+        from joblib import Parallel, delayed
+
+        Pll = Parallel(n_jobs=njobs, verbose=5, backend="threading")
+        ids = np.array(range(len(params))) + 1
+        z = zip([self]*len(params), params, ids)
+        d_experiment = delayed(unwrap_experiment_self)
+        results = Pll(d_experiment(i) for i in z)
+
+        df = pandas.DataFrame(columns=['tau_awakening', 'tau_survive',
+                                       'D_max', 'name'])
+
+        p = self.conf.p
+        k = 0
+        j = 0
+        for pp in params:
+            (tau_awakening, tau_survive, D_max) = pp
+            k += 1
+            i = 0
+            for experiment in range(p.nran):
+                i += 1
+                j += 1
+                dirName = p.dir_output+p.exp_id + '/D' + str(int(D_max))+'/'
+                filename = dirName + str(k).zfill(5) + '_'
+                filename = filename + str(i).zfill(3) + '.pk'
+                df.loc[j] = [tau_awakening, tau_survive, D_max, filename]
+
+        # write files
+        fn = self.conf.filenames
+        fname = fn.dir_output + '/' + fn.exp_id
+        fname = fname + '/' + fn.pars_root + '.csv'
+        df.to_csv(fname, index=False)
+
+        return results
+
+    def run_experiment_params(self, params, idx):
         """Make experiment.
 
         Requires a single value of parameters.
@@ -469,6 +675,63 @@ class GalacticNetwork():
 
         Args:
             p (tuple): A named tuple containing all parameters for the
+            simulation: [tau_awakening, tau_survive, D_max, index]
+
+        Raises:
+            None
+
+        Returns:
+            None
+        """
+        from os import makedirs, path
+
+        p = self.conf.p
+
+        try:
+            dirName = p.dir_output + p.exp_id+''
+            makedirs(dirName)
+            if p.verbose:
+                print("Directory ", dirName,  " Created ")
+        except FileExistsError:
+            # print("Directory ", dirName, " already exists")
+            pass
+
+        D_max = params[2]
+
+        dirName = p.dir_output + p.exp_id + '/D' + str(int(D_max))
+        try:
+            makedirs(dirName)
+            if p.verbose:
+                print("Directory ", dirName, " Created ")
+        except FileExistsError:
+            # print("Directory ", dirName, " already exists")
+            pass
+
+        i = 0
+        for experiment in range(p.nran):
+            i += 1
+            dirName = p.dir_output+p.exp_id + '/D' + str(int(D_max))+'/'
+            filename = dirName + str(idx).zfill(5) + '_'
+            filename = filename + str(i).zfill(3) + '.pk'
+
+            if(path.isfile(filename)):
+                if(p.overwrite):
+                    self.run_simulation(p, params)
+                    pickle.dump(self.MPL, open(filename, "wb"))
+                else:
+                    continue
+            else:
+                self.run_simulation(p, params)
+                pickle.dump(self.MPL, open(filename, "wb"))
+
+    def run_experiment_param_set(self, params):
+        """Make experiment.
+
+        Requires a single value of parameters.
+        Writes output on a file
+
+        Args:
+            params (list): A list containing all parameters for the
             simulation
 
         Raises:
@@ -478,38 +741,46 @@ class GalacticNetwork():
             None
         """
         from os import makedirs, path
-        import itertools
         import pandas
 
         p = self.conf.p
-        tau_awakeningS = np.linspace(p.tau_a_min, p.tau_a_max, p.tau_a_nbins)
-        tau_surviveS = np.linspace(p.tau_s_min, p.tau_s_max, p.tau_s_nbins)
-        D_maxS = np.linspace(p.d_max_min, p.d_max_max, p.d_max_nbins)
 
         try:
             dirName = p.dir_output + p.exp_id+''
             makedirs(dirName)
-            print("Directory ", dirName,  " Created ")
+            if p.verbose:
+                print("Directory ", dirName, " Created ")
         except FileExistsError:
-            print("Directory ", dirName,  " already exists")
+            print("Directory ", dirName, " already exists")
+
+        Dl = list(map(list, zip(*params)))[2]
+        D_max_names = [str(int(d)) for d in Dl]
+        D_maxS = list(set(D_max_names))
+
         for d in D_maxS:
             dirName = p.dir_output + p.exp_id + '/D' + str(int(d))
             try:
                 makedirs(dirName)
-                print("Directory ", dirName,  " Created ")
+                if p.verbose:
+                    print("Directory ", dirName, " Created ")
             except FileExistsError:
-                print("Directory ", dirName,  " already exists")
+                print("Directory ", dirName, " already exists")
 
         df = pandas.DataFrame(columns=['tau_awakening', 'tau_survive',
                                        'D_max', 'name'])
+        if p.showp:
+            bf1 = "{desc}: {percentage:.4f}%|{bar}|"
+            bf2 = "{n_fmt}/{total_fmt} ({elapsed}/{remaining})"
+            bf = ''.join([bf1, bf2])
+            iterator = tqdm(params, bar_format=bf)
+        else:
+            iterator = params
 
         k = 0
         j = 0
-        itt = itertools.product(tau_awakeningS, tau_surviveS, D_maxS)
-        for tau_awakening, tau_survive, D_max in itt:
-
-            pars = [tau_awakening, tau_survive, D_max]
-            print(tau_awakening, tau_survive, D_max)
+        for pp in iterator:
+            (tau_awakening, tau_survive, D_max) = pp
+            pars = list(pp)
             k += 1
             i = 0
             for experiment in range(p.nran):
@@ -521,21 +792,33 @@ class GalacticNetwork():
                 filename = dirName + str(k).zfill(5) + '_'
                 filename = filename + str(i).zfill(3) + '.pk'
                 df.loc[j] = [tau_awakening, tau_survive, D_max, filename]
+
                 if(path.isfile(filename)):
-                    continue
+                    if(p.overwrite):
+                        self.run_simulation(p, pars)
+                        pickle.dump(self.MPL, open(filename, "wb"))
+                    else:
+                        continue
+                else:
+                    self.run_simulation(p, pars)
+                    pickle.dump(self.MPL, open(filename, "wb"))
+                    # print(f'warning: directory {dirName} does not exist!')
 
-                self.run_simulation(p, pars)
-
-                pickle.dump(self.MPL, open(filename, "wb"))
+            fn = ''.join([p.dir_output, p.exp_id, '/',
+                          self.conf.filenames.progress_root, '.csv'])
+            with open(fn, 'a') as file:
+                w = f"{tau_awakening}, {tau_survive}, {D_max}, {filename}\n"
+                file.write(w)
 
         self.param_set = df
 
+        # write files
         fn = self.conf.filenames
         fname = fn.dir_output + '/' + fn.exp_id
         fname = fname + '/' + fn.pars_root + '.csv'
         df.to_csv(fname, index=False)
 
-    def run_simulation(self, p, pars):
+    def run_simulation(self, p=None, pars=None):
         """Make experiment.
 
         A single value of parameters
@@ -550,9 +833,17 @@ class GalacticNetwork():
         Returns:
             list of parameters as a named tuple
         """
-        tau_awakening = pars[0]
-        tau_survive = pars[1]
-        D_max = pars[2]
+        if p is None:
+            p = self.conf.p
+        if pars is None:
+            ps = self.conf.p
+            tau_awakening = ps.tau_a_min
+            tau_survive = ps.tau_s_min
+            D_max = ps.d_max_min
+        else:
+            tau_awakening = pars[0]
+            tau_survive = pars[1]
+            D_max = pars[2]
 
         import numpy as np
         import random
@@ -739,42 +1030,12 @@ class GalacticNetwork():
 
             self.MPL = MPL
 
-    def run_simulation_II(self, p, pars, Nrealizations, njobs):
-        """Compute the simulations in parallel.
-
-        Tasks:
-        1. traverse all ccns?
-
-        Args:
-            Nrealizations: the number of realizations
-            njobs: the number of jobs
-
-        Raises:
-            errors?
-
-        Returns:
-            None
-        """
-        from joblib import Parallel, delayed
-
-        results = []
-
-        z = zip([self]*len(Nrealizations), Nrealizations)
-
-        Pll = Parallel(n_jobs=njobs, verbose=5, backend="threading")
-
-        results = Pll(delayed(unwrap_simulation_self)(i) for i in z)
-
-        return results
-
-    
     def show_single_ccns(self):
         """Show simulation results.
 
         Args:
             None
         """
-
         CETIs = self.MPL
 
         for i in range(len(CETIs)):
@@ -824,8 +1085,7 @@ class results():
         df = pd.read_csv(fname)
         self.params = df
 
-
-    def redux(self):
+    def redux_1d(self, subset=None):
         """Reddux experiment.
 
         Similar to previous
@@ -833,7 +1093,10 @@ class results():
         import pickle
         import numpy as np
 
-        D = self.params
+        if subset is None:
+            D = self.params
+        else:
+            D = self.params[subset]
 
         index = []
         firstc = []
@@ -911,7 +1174,7 @@ class results():
                # chosen integer bins in multiplicity
                'count': count})  # distribution of the multiplicity of contacts
 
-    def redux2(self):
+    def redux_2d(self, show_progress=False):
         """Reddux experiment.
 
         Similar to previous
@@ -923,119 +1186,79 @@ class results():
         p = self.conf.p
         tau_awakeningS = np.linspace(p.tau_a_min, p.tau_a_max, p.tau_a_nbins)
         tau_surviveS = np.linspace(p.tau_s_min, p.tau_s_max, p.tau_s_nbins)
-        D_maxS = np.linspace(p.d_max_min, p.d_max_max, p.d_max_nbins)  
 
         A = tau_awakeningS
         S = tau_surviveS
 
         N1 = len(tau_awakeningS)
         N2 = len(tau_surviveS)
+        m1_d1 = np.zeros((N1, N2))
+        m2_d1 = np.zeros((N1, N2))
 
-        m1_d1=np.zeros((N1,N2))
-        m1_d2=np.zeros((N1,N2))
-        m1_d3=np.zeros((N1,N2))
-        m1_d4=np.zeros((N1,N2))
-        m2_d1=np.zeros((N1,N2))
-        m2_d2=np.zeros((N1,N2))
-        m2_d3=np.zeros((N1,N2))
-        m2_d4=np.zeros((N1,N2))
-
-        l0_d1 = self.params['D_max']==self.params['D_max'][0]
+        l0_d1 = self.params['D_max'] == self.params['D_max'][0]
 
         toolbar_width = 40
 
         print(self.params.keys())
 
         for i, a in enumerate(A):
-            print("%2.2d/%2.2d" % (i, N1))
-            l1 = self.params['tau_awakening']==a
+            if p.verbose:
+                print("%2.2d/%2.2d" % (i+1, N1))
+            l1 = abs(self.params['tau_awakening']-a) < 1.e-5
 
-            sys.stdout.write("[%s]" % (" " * toolbar_width))
-            sys.stdout.flush()
-            sys.stdout.write("\b" * (toolbar_width+1))
-            for j, s in enumerate(S):
-                sys.stdout.write("-")
+            if show_progress:
+                sys.stdout.write("[%s]" % (" " * toolbar_width))
                 sys.stdout.flush()
+                sys.stdout.write("\b" * (toolbar_width+1))
+            for j, s in enumerate(S):
+                if show_progress:
+                    sys.stdout.write("-")
+                    sys.stdout.flush()
 
-                l2 = self.params['tau_survive']==s
+                l2 = abs(self.params['tau_survive']-s) < 1.e-5
 
-                l = l0_d1 & l1 & l2
-                D_d1 = self.params[l]
+                cond = l0_d1 & l1 & l2
 
-                if len(D_d1)>0:
-                    awaken, inbox, distancias, hangon, waiting, count, index,\
-                    firstc, ncetis, x, y = redux(D_d1)
+                if len(cond) > 0:
+
+                    D = self.redux_1d(subset=cond)
+
+                    # awaken = D['A']
+                    inbox = D['inbox']
+                    # distancias = D['dist']
+                    # hangon = D['hangon']
+                    # waiting = D['w']
+                    # count = D['count']
+                    # index = D['index']
+                    firstc = D['c1']
+                    # ncetis = D['n']
+                    # x = D['x']
+                    # y = D['y']
+
                     m1_d1[i][j] = inbox.count(0)/max(len(inbox), 1)
-                    m2_d1[i][j] = firstc.count(0.)/max(len(firstc),1)
+                    m2_d1[i][j] = firstc.count(0.)/max(len(firstc), 1)
                 else:
                     m1_d1[i][j] = 0.
                     m2_d1[i][j] = 0.
-         
 
-        #         if len(D_d2)>0:
-        #             awaken, inbox, distancias, hangon, waiting, count, index,\
-        #             firstc, ncetis, x, y = redux(D_d2)
-        #             m1_d2[i][j] = inbox.count(0)/max(len(inbox), 1)
-        #             m2_d2[i][j] = firstc.count(0.)/max(len(firstc),1)
-        #         else:
-        #             m1_d2[i][j] = 0.
-        #             m2_d2[i][j] = 0.      
+            if show_progress:
+                sys.stdout.write("]\n")  # this ends the progress bar
 
-        #  
-        #         if len(D_d3)>0:
-        #             awaken, inbox, distancias, hangon, waiting, count, index,\
-        #             firstc, ncetis, x, y = redux(D_d3)
-        #             m1_d3[i][j] = inbox.count(0)/max(len(inbox), 1)
-        #             m2_d3[i][j] = firstc.count(0.)/max(len(firstc),1)
-        #         else:
-        #             m1_d3[i][j] = 0.
-        #             m2_d3[i][j] = 0.      
-        #  
+        m1_d1 = np.transpose(m1_d1)
+        m2_d1 = np.transpose(m2_d1)
 
-        #         if len(D_d4)>0:
-        #             awaken, inbox, distancias, hangon, waiting, count, index,\
-        #             firstc, ncetis, x, y = redux(D_d4)
-        #             m1_d4[i][j] = inbox.count(0)/max(len(inbox), 1)
-        #             m2_d4[i][j] = firstc.count(0.)/max(len(firstc),1)
-        #         else:
-        #             m1_d4[i][j] = 0.
-        #             m2_d4[i][j] = 0.      
+        fn = self.conf.filenames
+        fname = fn.dir_output + fn.exp_id
+        fname1 = fname + '/m1.pk'
+        fname2 = fname + '/m2.pk'
 
-            sys.stdout.write("]\n") # this ends the progress bar
-          
-        # # end: for i, a in enumerate(A)
+        print(fname1)
+        print(fname2)
 
+        pickle.dump(m1_d1, open(fname1, 'wb'))
+        pickle.dump(m2_d1, open(fname2, 'wb'))
 
-
-        # m1_d1 = np.transpose(m1_d1)
-        # m2_d1 = np.transpose(m2_d1)
-
-        # m1_d2 = np.transpose(m1_d2)
-        # m2_d2 = np.transpose(m2_d2)
-
-        # m1_d3 = np.transpose(m1_d3)
-        # m2_d3 = np.transpose(m2_d3)
-
-        # m1_d4 = np.transpose(m1_d4)
-        # m2_d4 = np.transpose(m2_d4)
-
-
-        # pickle.dump( m1_d1, open('../dat/SKRU_07/matrix1_d1_SKRU_07.pkl', 'wb'))
-        # pickle.dump( m1_d2, open('../dat/SKRU_07/matrix1_d2_SKRU_07.pkl', 'wb'))
-        # pickle.dump( m1_d3, open('../dat/SKRU_07/matrix1_d3_SKRU_07.pkl', 'wb'))
-        # pickle.dump( m1_d4, open('../dat/SKRU_07/matrix1_d4_SKRU_07.pkl', 'wb'))
-
-        # pickle.dump( m2_d1, open('../dat/SKRU_07/matrix2_d1_SKRU_07.pkl', 'wb'))
-        # pickle.dump( m2_d2, open('../dat/SKRU_07/matrix2_d2_SKRU_07.pkl', 'wb'))
-        # pickle.dump( m2_d3, open('../dat/SKRU_07/matrix2_d3_SKRU_07.pkl', 'wb'))
-        # pickle.dump( m2_d4, open('../dat/SKRU_07/matrix2_d4_SKRU_07.pkl', 'wb'))
-
-
-
-                                                     
-
-
-
+        return((m1_d1, m2_d1))
 
     def show_ccns(self, i):
         """Show simulation results.

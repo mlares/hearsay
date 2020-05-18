@@ -24,11 +24,16 @@ events on a timeline and process these events in chronological order
 
 
 
-.. image:: F_scheme.png
-   :width: 400px  
-   :align: center 
+.. figure:: F_scheme.png
+   :width: 400px
+   :align: center
 
-.. image:: F_messages.png
-   :width: 600px  
-   :align: center 
+   Space-time diagrams showing the causal contact connections.
 
+
+
+.. figure:: F_messages.png
+   :width: 600px
+   :align: center
+
+   All possible cases for the generation of events.

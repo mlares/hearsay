@@ -39,9 +39,10 @@ API
 
    api/hearsay
    api/gettingstarted
+   api/usage
+   api/configuration
    api/testing
    api/todo
-   api/usage
 
 ******************
 Indices and tables

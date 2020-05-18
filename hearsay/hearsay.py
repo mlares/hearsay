@@ -299,19 +299,34 @@ class parser(ConfigParser):
         Returns:
             Exception if settings have inconsistencies.
         """
-        from os import path
+        from os import path, makedirs
         from sys import exit
 
         if self.p.verbose:
             print(self.message)
+            print('Checking settings...')
 
         if not path.isdir(self.p.dir_output):
             print(f"Directory {self.p.dir_output} does not exist")
-            exit('Exit with error code 004801')
+
+            try:
+                makedirs(self.p.dir_output)
+                if self.p.verbose:
+                    print("Directory ", self.p.dir_output,  " Created ")
+            except FileExistsError:
+                # directory already exists
+                pass
 
         if not path.isdir(self.p.dir_plots):
             print(f"Directory {self.p.dir_plots} does not exist")
-            exit('Exit with error code 003901')
+
+            try:
+                makedirs(self.p.dir_plots)
+                if self.p.verbose:
+                    print("Directory ", self.p.dir_plots,  " Created ")
+            except FileExistsError:
+                # directory already exists
+                pass
 
 
 class Node:

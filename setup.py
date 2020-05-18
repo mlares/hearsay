@@ -2,7 +2,8 @@
 # DOCS
 # ===========================================================
 
-"""Utilities to make discrete event simulations
+"""Utilities to make discrete event simulations of the causal
+   contacts between nodes in the Galaxy
 
 """
 
@@ -33,8 +34,8 @@ with open(PATH / "README.rst") as fp:
     LONG_DESCRIPTION = fp.read()
  
 DESCRIPTION = (
-    "Utilities to access different Argentina-Related databases of "
-    "COVID-19 data from the IATE task force.")
+    "Tools to perform simulations of a network of connected nodes"
+    "in the Galaxy")
 
 with open(PATH / "hearsay" / "__init__.py") as fp:
     VERSION = [

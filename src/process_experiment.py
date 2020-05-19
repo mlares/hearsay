@@ -1,4 +1,4 @@
-import hearsay
+from hearsay import hearsay
 from sys import argv
 
 if len(argv) > 1:
@@ -8,4 +8,4 @@ else:
 
 R = hearsay.results(conf)
 R.load()
-res = R.redux_2d()
+res = R.redux_1d()

@@ -8,4 +8,4 @@ else:
 
 G = hearsay.GalacticNetwork(conf)
 
-G.run_experiment() #parallel=conf.p.run_parallel)
+G.run_experiment(parallel=conf.p.run_parallel)

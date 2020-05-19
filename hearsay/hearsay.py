@@ -652,7 +652,8 @@ class GalacticNetwork():
         import pandas
         from joblib import Parallel, delayed
 
-        Pll = Parallel(n_jobs=njobs, verbose=5, backend="threading")
+        # backend: threading / multiprocessing / loky
+        Pll = Parallel(n_jobs=njobs, verbose=5, backend="loky")
         ids = np.array(range(len(params))) + 1
         z = zip([self]*len(params), params, ids)
         d_experiment = delayed(unwrap_experiment_self)
@@ -1190,6 +1191,12 @@ class results():
                #
                # chosen integer bins in multiplicity
                'count': count})  # distribution of the multiplicity of contacts
+
+    def plot_1d(self, key):
+        """Plot the histogram of a quantity in the experiment.
+
+        """
+ 
 
     def redux_2d(self, show_progress=False):
         """Reddux experiment.

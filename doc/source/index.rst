@@ -32,10 +32,10 @@ API
 .. toctree::
    :maxdepth: 2
 
-   api/hearsay
    api/gettingstarted
    api/configuration
    api/usage
+   api/hearsay
 
 
 ..   api/testing

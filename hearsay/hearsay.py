@@ -300,7 +300,6 @@ class parser(ConfigParser):
             Exception if settings have inconsistencies.
         """
         from os import path, makedirs
-        from sys import exit
 
         if self.p.verbose:
             print(self.message)
@@ -652,8 +651,7 @@ class GalacticNetwork():
         import pandas
         from joblib import Parallel, delayed
 
-        # backend: threading / multiprocessing / loky
-        Pll = Parallel(n_jobs=njobs, verbose=5, backend="loky")
+        Pll = Parallel(n_jobs=njobs, verbose=5, prefer="processes")
         ids = np.array(range(len(params))) + 1
         z = zip([self]*len(params), params, ids)
         d_experiment = delayed(unwrap_experiment_self)
@@ -1195,8 +1193,9 @@ class results():
     def plot_1d(self, key):
         """Plot the histogram of a quantity in the experiment.
 
+        Make the plot of a given derived parameter.
         """
- 
+        return None
 
     def redux_2d(self, show_progress=False):
         """Reddux experiment.

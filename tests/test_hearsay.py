@@ -23,17 +23,17 @@ def test_parser_01():
     conf = hearsay.parser()
     assert isinstance(conf, hearsay.parser)
 
-# def test_parser_02():
-#     conf = hearsay.parser()
-#     fname = PATH / '../set/experiment_test.ini'
-#     conf.check_file(['',fname])
-#     assert isinstance(conf.filename, str)
+def test_parser_02():
+    conf = hearsay.parser()
+    fname = PATH / '../set/experiment_test.ini'
+    conf.check_file(fname)
+    assert isinstance(conf.filename, str)
 
-# def test_parser_03():
-#     conf = hearsay.parser()
-#     fname = PATH / '../set/experiment_test.ini'
-#     conf.check_file(['',fname])
-#     assert conf.filename == '../set/experiment_test.ini'
+def test_parser_03():
+    conf = hearsay.parser()
+    fname = PATH / '../set/experiment_test.ini'
+    conf.check_file(['',fname])
+    assert conf.filename == '../set/experiment_test.ini'
  
 def test_parser_04():
     conf = hearsay.parser()
@@ -92,19 +92,6 @@ def test_GN_01():
 
 
 # ____________________________________________________________
-# CCN class
-
-
-# ____________________________________________________________
-
-
-# ____________________________________________________________
-
-
-# ____________________________________________________________
-
-
-
 
 
 class Test_CCN:

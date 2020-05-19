@@ -90,6 +90,45 @@ organized in four categories:
 
 An example file is provided in the ``set`` directory.
 
+The details about the configuration parameters are given in :ref:`configuration`.
+
+
+Loading configuration
+=====================
+
+There are two approaches to loading the configuration parameters, that depend on
+how the code is run:
+
+**1. Command line call**
+
+The configiration file can be given throught the command line::
+
+   python run_experiment.py config_file.ini
+
+In order for this to work, the script run_experiment.py must contain::
+
+   from hearsay import hearsay
+   from sys import argv
+   conf = hearsay.parser(argv)
+
+
+
+**2. Call from a python environment**
+
+When used from a python environment, it is possible to pass a filename
+as a string.
+
+.. code-block::
+
+   from hearsay import hearsay
+   config_file = 'config_file.ini'
+   conf = hearsay.parser(config_file)
+
+
+If the ``parser`` method is called without arguments, it will try to load
+the file ``../set/experiment.ini`` which is distributed with the package.
+
+
 
 Command line usage
 ==================

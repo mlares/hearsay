@@ -147,7 +147,7 @@ class parser(ConfigParser):
 
         self.filenames = res
 
-    def load_parameters(self, nran=None):
+    def load_parameters(self, keys=None, values=None, nran=None):
         """Load parameters from config file.
 
         Args:
@@ -159,6 +159,17 @@ class parser(ConfigParser):
         Returns:
             list of parameters as a named tuple
         """
+        if isinstance(keys, list):
+            # override configuration file with arguments
+            if len(keys) != len(values):
+                print('Error overriding parameters (using file values)')
+            else:
+                for k, v in zip(keys, values):
+                    for sec in self.sections():
+                        has = self.has_option(sec, k)
+                        if has:
+                            self[sec][k] = v
+
         choice = self['UX']['verbose']
         if choice.lower() in 'yesitrue':
             verbose = True

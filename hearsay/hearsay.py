@@ -147,7 +147,8 @@ class parser(ConfigParser):
 
         self.filenames = res
 
-    def load_parameters(self, keys=None, values=None, nran=None):
+    def load_parameters(self, keys=None, values=None, nran=None,
+                        *args, **kwargs):
         """Load parameters from config file.
 
         Args:

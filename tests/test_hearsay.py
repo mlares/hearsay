@@ -148,4 +148,5 @@ def test_GN_01():
 # Code coverage: 
 # coverage run -m pytest test_hearsay.py
 # coverage report -m
+# coverage report html
 

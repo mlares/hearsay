@@ -548,7 +548,7 @@ def unwrap_experiment_self(arg, **kwarg):
     This function just call the serialized version, but allows to run
     it concurrently.
     """
-    return GalacticNetwork.run_experiment_params(*arg, **kwarg)
+    return GalacticNetwork.run_suite(*arg, **kwarg)
 
 
 class GalacticNetwork():
@@ -563,10 +563,16 @@ class GalacticNetwork():
             None
         __str__:
             None
-        run_experiment:
-            None
+        run:
+            Run a suite of simulations for the full parametet ser in
+            the configuration file.
+        run_suite:
+            Run a suite of simulations for a given parameter set.
+        run_suite_II:
+            Run a suite of simulations for a given parameter set, to
+            be run in parallel.
         run_simulation:
-            None
+            Run a simulation for a point in parameter space.
     """
 
     def __init__(self, conf=None):
@@ -602,9 +608,8 @@ class GalacticNetwork():
         """
         print('message')
 
-    def run_experiment(self, spars=None,
-                       A=None, S=None, D=None,
-                       parallel=False, njobs=None):
+    def run(self, spars=None, A=None, S=None, D=None,
+            parallel=False, njobs=None, interactive=False):
         """Run an experiment.
 
         An experiment requires a set of at least three parameters, which are
@@ -646,11 +651,22 @@ class GalacticNetwork():
         if parallel:
             if njobs is None:
                 njobs = self.conf.p.njobs
-            self.run_experiment_params_II(ll, njobs)
+            if interactive:
+                df, res = self.run_suite_II(ll, njobs, interactive)
+            else:
+                self.run_suite_II(ll, njobs)
         else:
-            self.run_experiment_param_set(ll)
+            if interactive:
+                df, res = self.run_suite(ll, interactive)
+            else:
+                self.run_suite(ll)
 
-    def run_experiment_params_II(self, params, njobs):
+        if interactive:
+            return df, res
+        else:
+            return None
+
+    def run_suite_II(self, params, njobs, interactive=False):
         """Run an experiment, parallel version.
 
         An experiment requires a set of at least three parameters, which are
@@ -665,7 +681,8 @@ class GalacticNetwork():
 
         Pll = Parallel(n_jobs=njobs, verbose=5, prefer="processes")
         ids = np.array(range(len(params))) + 1
-        z = zip([self]*len(params), params, ids)
+        ntr = [interactive]*len(params)
+        z = zip([self]*len(params), params, ids, ntr)
         d_experiment = delayed(unwrap_experiment_self)
         results = Pll(d_experiment(i) for i in z)
 
@@ -693,66 +710,12 @@ class GalacticNetwork():
         fname = fname + '/' + fn.pars_root + '.csv'
         df.to_csv(fname, index=False)
 
-        return results
+        if interactive:
+            return df, results
+        else:
+            return None
 
-    def run_experiment_params(self, params, idx):
-        """Make experiment.
-
-        Requires a single value of parameters.
-        Writes output on a file
-
-        Args:
-            p (tuple): A named tuple containing all parameters for the
-            simulation: [tau_awakening, tau_survive, D_max, index]
-
-        Raises:
-            None
-
-        Returns:
-            None
-        """
-        from os import makedirs, path
-
-        p = self.conf.p
-
-        try:
-            dirName = p.dir_output + p.exp_id+''
-            makedirs(dirName)
-            if p.verbose:
-                print("Directory ", dirName,  " Created ")
-        except FileExistsError:
-            # print("Directory ", dirName, " already exists")
-            pass
-
-        D_max = params[2]
-
-        dirName = p.dir_output + p.exp_id + '/D' + str(int(D_max))
-        try:
-            makedirs(dirName)
-            if p.verbose:
-                print("Directory ", dirName, " Created ")
-        except FileExistsError:
-            # print("Directory ", dirName, " already exists")
-            pass
-
-        i = 0
-        for experiment in range(p.nran):
-            i += 1
-            dirName = p.dir_output+p.exp_id + '/D' + str(int(D_max))+'/'
-            filename = dirName + str(idx).zfill(5) + '_'
-            filename = filename + str(i).zfill(3) + '.pk'
-
-            if(path.isfile(filename)):
-                if(p.overwrite):
-                    self.run_simulation(p, params)
-                    pickle.dump(self.MPL, open(filename, "wb"))
-                else:
-                    continue
-            else:
-                self.run_simulation(p, params)
-                pickle.dump(self.MPL, open(filename, "wb"))
-
-    def run_experiment_param_set(self, params):
+    def run_suite(self, params, interactive=False):
         """Make experiment.
 
         Requires a single value of parameters.
@@ -760,7 +723,7 @@ class GalacticNetwork():
 
         Args:
             params (list): A list containing all parameters for the
-            simulation
+            simulation.  Format, e.g.: [(A1,S1,D1), (A2,S2,D2)]
 
         Raises:
             None
@@ -806,6 +769,7 @@ class GalacticNetwork():
 
         k = 0
         j = 0
+        results = []
         for pp in iterator:
             (tau_awakening, tau_survive, D_max) = pp
             pars = list(pp)
@@ -823,14 +787,19 @@ class GalacticNetwork():
 
                 if(path.isfile(filename)):
                     if(p.overwrite):
-                        self.run_simulation(p, pars)
+                        MPL = self.run_simulation(p, pars)
                         pickle.dump(self.MPL, open(filename, "wb"))
                     else:
-                        continue
+                        if interactive:
+                            MPL = self.run_simulation(p, pars)
+                        else:
+                            continue
                 else:
-                    self.run_simulation(p, pars)
+                    MPL = self.run_simulation(p, pars)
                     pickle.dump(self.MPL, open(filename, "wb"))
                     # print(f'warning: directory {dirName} does not exist!')
+
+                results.append(MPL)
 
             fn = ''.join([p.dir_output, p.exp_id, '/',
                           self.conf.filenames.progress_root, '.csv'])
@@ -846,14 +815,20 @@ class GalacticNetwork():
         fname = fname + '/' + fn.pars_root + '.csv'
         df.to_csv(fname, index=False)
 
+        if interactive:
+            return None  # df#, results
+        else:
+            return None  # df
+
     def run_simulation(self, p=None, pars=None):
         """Make experiment.
 
         A single value of parameters
 
         Args:
-            p ():
-            pars ():
+            p (configuration object): configuration
+            pars (list): list of (3) parameters:
+                         tau_A, tau_S and D_max
 
         Raises:
             None

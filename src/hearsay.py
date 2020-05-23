@@ -5,6 +5,7 @@ description
 
 import numpy as np
 from configparser import ConfigParser
+import itertools
 import pandas as pd
 import pickle
 import sys
@@ -581,8 +582,8 @@ class GalacticNetwork():
         Args:
             None
         """
-        self.param_set = dict()
-        self.conf = conf
+        self.params = None
+        self.config = conf
 
     def __len__(self):
         """Return the number of contacts.
@@ -590,7 +591,7 @@ class GalacticNetwork():
         Args:
             None
         """
-        return self.ccns
+        pass
 
     def __repr__(self):
         """Represent with a string.
@@ -608,31 +609,36 @@ class GalacticNetwork():
         """
         print('message')
 
-    def run(self, spars=None, A=None, S=None, D=None,
-            parallel=False, njobs=None, interactive=False):
-        """Run an experiment.
+    def set_parameters(self, spars=None,
+                       A=None, S=None, D=None,
+                       write_file=False):
+        """Set parameters for the experiment.
 
-        An experiment requires a set of at least three parameters, which are
-        taken from the configuration file.
-
+        If no arguments are given, the parameters are set from the ini file.
         Args:
            A (number or list of numbers, optional)
            D (number or list of numbers, optional)
            S (number or list of numbers, optional)
-           parallel (boolean, optional). Flag to indicate if run is made using
-           the parallelized version.  Default: False.
         """
-        import itertools
-        p = self.conf.p
+        p = self.config.p
+
         if spars is None:
             tau_awakeningS = np.linspace(p.tau_a_min, p.tau_a_max,
                                          p.tau_a_nbins)
             tau_surviveS = np.linspace(p.tau_s_min, p.tau_s_max, p.tau_s_nbins)
             D_maxS = np.linspace(p.d_max_min, p.d_max_max, p.d_max_nbins)
         else:
-            tau_awakeningS = [spars[0]]
-            tau_surviveS = [spars[1]]
-            D_maxS = [spars[2]]
+            if isinstance(spars, pd.DataFrame):
+                tau_awakeningS = spars['tau_awakening']
+                tau_surviveS = spars['tau_survive']
+                D_maxS = spars['D_max']
+            elif isinstance(spars, list):
+                tau_awakeningS = spars[0]
+                tau_surviveS = spars[1]
+                D_maxS = spars[2]
+            else:
+                print('warning: a dataframe or list expected for spars')
+                pass
 
         if A is not None:
             tau_awakeningS = A
@@ -641,55 +647,12 @@ class GalacticNetwork():
         if D is not None:
             D_maxS = D
 
-        if njobs is not None:
-            parallel = True
-
-        ll = []
+        params = []
         for i in itertools.product(tau_awakeningS, tau_surviveS, D_maxS):
-            ll.append(i)
+            params.append(i)
 
-        if parallel:
-            if njobs is None:
-                njobs = self.conf.p.njobs
-            if interactive:
-                df, res = self.run_suite_II(ll, njobs, interactive)
-            else:
-                self.run_suite_II(ll, njobs)
-        else:
-            if interactive:
-                df, res = self.run_suite(ll, interactive)
-            else:
-                self.run_suite(ll)
-
-        if interactive:
-            return df, res
-        else:
-            return None
-
-    def run_suite_II(self, params, njobs, interactive=False):
-        """Run an experiment, parallel version.
-
-        An experiment requires a set of at least three parameters, which are
-        taken from the configuration file.
-
-        Args:
-        params: the parameters
-        njobs: number of jobs
-        """
-        import pandas
-        from joblib import Parallel, delayed
-
-        Pll = Parallel(n_jobs=njobs, verbose=5, prefer="processes")
-        ids = np.array(range(len(params))) + 1
-        ntr = [interactive]*len(params)
-        z = zip([self]*len(params), params, ids, ntr)
-        d_experiment = delayed(unwrap_experiment_self)
-        results = Pll(d_experiment(i) for i in z)
-
-        df = pandas.DataFrame(columns=['tau_awakening', 'tau_survive',
-                                       'D_max', 'name'])
-
-        p = self.conf.p
+        df = pd.DataFrame(columns=['tau_awakening', 'tau_survive',
+                          'D_max', 'name'])
         k = 0
         j = 0
         for pp in params:
@@ -705,17 +668,94 @@ class GalacticNetwork():
                 df.loc[j] = [tau_awakening, tau_survive, D_max, filename]
 
         # write files
-        fn = self.conf.filenames
+        fn = self.config.filenames
+        fname = fn.dir_output + '/' + fn.exp_id
+        fname = fname + '/' + fn.pars_root + '.csv'
+        df.to_csv(fname, index=False)
+
+        self.params = df
+
+    def run(self, parallel=False, njobs=None, interactive=False):
+        """Run an experiment.
+
+        An experiment requires a set of at least three parameters, which are
+        taken from the configuration file.
+
+        Args:
+           parallel (boolean, optional). Flag to indicate if run is made using
+           the parallelized version.  Default: False.
+        """
+        if njobs is not None:
+            parallel = True
+
+        if parallel:
+            if njobs is None:
+                njobs = self.config.p.njobs
+            if interactive:
+                res = self.run_suite_II(njobs, interactive)
+            else:
+                self.run_suite_II(njobs)
+        else:
+            if interactive:
+                res = self.run_suite(interactive)
+            else:
+                self.run_suite()
+
+        if interactive:
+            return res
+        else:
+            return None
+
+    def run_suite_II(self, njobs, interactive=False):
+        """Run an experiment, parallel version.
+
+        An experiment requires a set of at least three parameters, which are
+        taken from the configuration file.
+
+        Args:
+        params: the parameters
+        njobs: number of jobs
+        """
+        from joblib import Parallel, delayed
+
+        Pll = Parallel(n_jobs=njobs, verbose=5, prefer="processes")
+        params = self.params.values.tolist()
+        ids = np.array(range(len(params))) + 1
+        ntr = [interactive]*len(params)
+        z = zip([self]*len(params), params, ids, ntr)
+        d_experiment = delayed(unwrap_experiment_self)
+        results = Pll(d_experiment(i) for i in z)
+
+        df = pd.DataFrame(columns=['tau_awakening', 'tau_survive',
+                                   'D_max', 'name'])
+
+        p = self.config.p
+        k = 0
+        j = 0
+        for pp in params:
+            (tau_awakening, tau_survive, D_max) = pp
+            k += 1
+            i = 0
+            for experiment in range(p.nran):
+                i += 1
+                j += 1
+                dirName = p.dir_output+p.exp_id + '/D' + str(int(D_max))+'/'
+                filename = dirName + str(k).zfill(5) + '_'
+                filename = filename + str(i).zfill(3) + '.pk'
+                df.loc[j] = [tau_awakening, tau_survive, D_max, filename]
+
+        # write files
+        fn = self.config.filenames
         fname = fn.dir_output + '/' + fn.exp_id
         fname = fname + '/' + fn.pars_root + '.csv'
         df.to_csv(fname, index=False)
 
         if interactive:
-            return df, results
+            return results
         else:
             return None
 
-    def run_suite(self, params, interactive=False):
+    def run_suite(self, interactive=False):
         """Make experiment.
 
         Requires a single value of parameters.
@@ -732,9 +772,9 @@ class GalacticNetwork():
             None
         """
         from os import makedirs, path
-        import pandas
 
-        p = self.conf.p
+        p = self.config.p
+        params = self.params.values.tolist()
 
         try:
             dirName = p.dir_output + p.exp_id+''
@@ -757,8 +797,6 @@ class GalacticNetwork():
             except FileExistsError:
                 print("Directory ", dirName, " already exists")
 
-        df = pandas.DataFrame(columns=['tau_awakening', 'tau_survive',
-                                       'D_max', 'name'])
         if p.showp:
             bf1 = "{desc}: {percentage:.4f}%|{bar}|"
             bf2 = "{n_fmt}/{total_fmt} ({elapsed}/{remaining})"
@@ -771,20 +809,13 @@ class GalacticNetwork():
         j = 0
         results = []
         for pp in iterator:
-            (tau_awakening, tau_survive, D_max) = pp
+            (tau_awakening, tau_survive, D_max, filename) = pp
             pars = list(pp)
             k += 1
             i = 0
             for experiment in range(p.nran):
-
                 i += 1
                 j += 1
-
-                dirName = p.dir_output+p.exp_id + '/D' + str(int(D_max))+'/'
-                filename = dirName + str(k).zfill(5) + '_'
-                filename = filename + str(i).zfill(3) + '.pk'
-                df.loc[j] = [tau_awakening, tau_survive, D_max, filename]
-
                 if path.isfile(filename):
                     if p.overwrite:
                         self.run_simulation(p, pars)
@@ -801,21 +832,13 @@ class GalacticNetwork():
                         results.append(MPL)
 
             fn = ''.join([p.dir_output, p.exp_id, '/',
-                          self.conf.filenames.progress_root, '.csv'])
+                          self.config.filenames.progress_root, '.csv'])
             with open(fn, 'a') as file:
                 w = f"{tau_awakening}, {tau_survive}, {D_max}, {filename}\n"
                 file.write(w)
 
-        self.param_set = df
-
-        # write files
-        fn = self.conf.filenames
-        fname = fn.dir_output + '/' + fn.exp_id
-        fname = fname + '/' + fn.pars_root + '.csv'
-        df.to_csv(fname, index=False)
-
         if interactive:
-            return df, results
+            return results
         else:
             return None
 
@@ -836,9 +859,9 @@ class GalacticNetwork():
             list of parameters as a named tuple
         """
         if p is None:
-            p = self.conf.p
+            p = self.config.p
         if pars is None:
-            ps = self.conf.p
+            ps = self.config.p
             tau_awakening = ps.tau_a_min
             tau_survive = ps.tau_s_min
             D_max = ps.d_max_min
@@ -1077,20 +1100,20 @@ class results():
         """
         # super().__init__()
         self.params = dict()
-        self.conf = conf
+        self.config = conf
 
     def load(self):
         """Load parameter set and data.
 
         Load all data generated from an experiment.
         """
-        fn = self.conf.filenames
+        fn = self.config.filenames
         fname = fn.dir_output + fn.exp_id
         fname = fname + '/' + fn.pars_root + '.csv'
         df = pd.read_csv(fname)
         self.params = df
 
-    def redux_1d(self, subset=None):
+    def redux_1d(self, subset=None, custompars=None):
         """Reddux experiment.
 
         Similar to previous
@@ -1098,10 +1121,24 @@ class results():
         import pickle
         import numpy as np
 
+        D = self.params
         if subset is None:
-            D = self.params
+            D = pd.DataFrame(D)
+            print('using ini file')
         else:
             D = self.params[subset]
+
+        # custompars = (df, MPLs)
+        if custompars is not None:
+            check = isinstance(custompars[0], pd.DataFrame) and \
+                    isinstance(custompars[1], list)
+            if not check:
+                print("Error in the parameters")
+                D = custompars[0]
+                MPLs = custompars[1]
+            else:
+                print('custom parameters must by pandas dataframe')
+
 
         index = []
         firstc = []
@@ -1195,7 +1232,7 @@ class results():
         import numpy as np
 
         # parameters
-        p = self.conf.p
+        p = self.config.p
         tau_awakeningS = np.linspace(p.tau_a_min, p.tau_a_max, p.tau_a_nbins)
         tau_surviveS = np.linspace(p.tau_s_min, p.tau_s_max, p.tau_s_nbins)
 
@@ -1259,7 +1296,7 @@ class results():
         m1_d1 = np.transpose(m1_d1)
         m2_d1 = np.transpose(m2_d1)
 
-        fn = self.conf.filenames
+        fn = self.config.filenames
         fname = fn.dir_output + fn.exp_id
         fname1 = fname + '/m1.pk'
         fname2 = fname + '/m2.pk'

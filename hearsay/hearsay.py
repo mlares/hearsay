@@ -5,6 +5,7 @@ description
 
 import numpy as np
 from configparser import ConfigParser
+import itertools
 import pandas as pd
 import pickle
 import sys
@@ -33,7 +34,7 @@ class parser(ConfigParser):
         self.read_config_file()
 
         self.load_filenames()
-        self.load_parameters(*args, **kwargs)
+        self.load_config(*args, **kwargs)
         self.check_settings()
 
     def check_file(self, sys_args=""):
@@ -147,8 +148,8 @@ class parser(ConfigParser):
 
         self.filenames = res
 
-    def load_parameters(self, keys=None, values=None, nran=None,
-                        *args, **kwargs):
+    def load_config(self, keys=None, values=None, nran=None,
+                    *args, **kwargs):
         """Load parameters from config file.
 
         Args:
@@ -210,9 +211,7 @@ class parser(ConfigParser):
         elif choices.lower() in 'nofalse':
             run_parallel = False
         else:
-            print('Error in .ini file: simu: run_parallel must be Y/N'
-                  'Exiting.')
-            exit()
+            run_parallel = False
 
         # Experiment settings
         exp_id = self['experiment']['exp_id']
@@ -484,64 +483,6 @@ class OrderedList:
         return count
 
 
-class ccn():
-    """Class for causal contact nodes.
-
-    methods:
-        init:
-            creates a node
-        __len__:
-            None
-        __repr__:
-            None
-        __str__:
-            None
-    """
-
-    def __init__(self):
-        """Initialize.
-
-        Args:
-            None
-        """
-        self.state = 'pre-awakening'
-        self.received = 0
-        self.delivered = 0
-        self.twoway = 0
-        self.t_awakening = 0.
-        self.t_doomsday = 0.
-        self.n_listening = 0.
-        self.n_listened = 0.
-
-    def __len__(self):
-        """Get the number of contacts for this node.
-
-        Args:
-            None
-        """
-        return self.received
-
-    def __repr__(self):
-        """Representation for print.
-
-        Args:
-            None
-        """
-        return 'Causal contact node in state {!s}, having\
-                {!i} received signals and {!i} times listened'.format(
-            self.state, self.received, self.delivered)
-
-    def __str__(self):
-        """Show the node as a string.
-
-        Args:
-            None
-        """
-        return 'Causal contact node in state {!s}, having\
-                {!i} received signals and {!i} times listened'.format(
-            self.state, self.received, self.delivered)
-
-
 def unwrap_experiment_self(arg, **kwarg):
     """Wrap the serial function for parallel run.
 
@@ -581,8 +522,8 @@ class GalacticNetwork():
         Args:
             None
         """
-        self.param_set = dict()
-        self.conf = conf
+        self.params = None
+        self.config = conf
 
     def __len__(self):
         """Return the number of contacts.
@@ -590,7 +531,7 @@ class GalacticNetwork():
         Args:
             None
         """
-        return self.ccns
+        pass
 
     def __repr__(self):
         """Represent with a string.
@@ -608,31 +549,46 @@ class GalacticNetwork():
         """
         print('message')
 
-    def run(self, spars=None, A=None, S=None, D=None,
-            parallel=False, njobs=None, interactive=False):
-        """Run an experiment.
+    def set_parameters(self, spars=None,
+                       A=None, S=None, D=None,
+                       write_file=False):
+        """Set parameters for the experiment.
 
-        An experiment requires a set of at least three parameters, which are
-        taken from the configuration file.
-
+        If no arguments are given, the parameters are set from the ini file.
         Args:
-           A (number or list of numbers, optional)
-           D (number or list of numbers, optional)
-           S (number or list of numbers, optional)
-           parallel (boolean, optional). Flag to indicate if run is made using
-           the parallelized version.  Default: False.
+        spars (dataframe, list or string, optional):
+        Parameters to set the experiment.
+        If spars is a pandas DataFrame, it must contain the keys:
+        ['tau_awakening', 'tau_survive', 'd_max', 'filename'].
+        If spars is a list, it must have length=4, comprisong the
+        tau_awakening, tau_survive, d_max, and filename lists.
+        If spars is a string, a file with that name will be read.
+        The file must contain the same four columns, with the names.
+        A (number or list, optional): Values of the tau_awakening parameter
+        S (number or list, optional): Values of the tau_survive parameter
+        D (number or list, optional): Values of the D_max parameter
+        write_file (optional): filename to write the parameter set.
         """
-        import itertools
-        p = self.conf.p
+        p = self.config.p
+
         if spars is None:
             tau_awakeningS = np.linspace(p.tau_a_min, p.tau_a_max,
                                          p.tau_a_nbins)
             tau_surviveS = np.linspace(p.tau_s_min, p.tau_s_max, p.tau_s_nbins)
             D_maxS = np.linspace(p.d_max_min, p.d_max_max, p.d_max_nbins)
         else:
-            tau_awakeningS = [spars[0]]
-            tau_surviveS = [spars[1]]
-            D_maxS = [spars[2]]
+            if isinstance(spars, pd.DataFrame):
+                tau_awakeningS = spars['tau_awakening']
+                tau_surviveS = spars['tau_survive']
+                D_maxS = spars['D_max']
+                filenames = spars['filename']
+            elif isinstance(spars, list):
+                tau_awakeningS = spars[0]
+                tau_surviveS = spars[1]
+                D_maxS = spars[2]
+            else:
+                print('warning: a dataframe or list expected for spars')
+                pass
 
         if A is not None:
             tau_awakeningS = A
@@ -641,32 +597,101 @@ class GalacticNetwork():
         if D is not None:
             D_maxS = D
 
+        df = pd.DataFrame(columns=['tau_awakening', 'tau_survive',
+                                   'D_max', 'filename'])
+        if isinstance(spars, pd.DataFrame):
+            params = []
+            prd = itertools.product(tau_awakeningS, tau_surviveS, D_maxS,
+                                    filenames)
+            for i in prd:
+                params.append(i)
+
+            j = 0
+            for pp in params:
+                (tau_awakening, tau_survive, D_max, filename) = pp
+                df.loc[j] = [tau_awakening, tau_survive, D_max, filename]
+        elif isinstance(spars, list):
+            params = []
+            prd = itertools.product(tau_awakeningS, tau_surviveS, D_maxS)
+            for i in prd:
+                params.append(i)
+            k = 0
+            j = 0
+            for pp in params:
+                (tau_awakening, tau_survive, D_max) = pp
+                k += 1
+                i = 0
+                for experiment in range(p.nran):
+                    i += 1
+                    j += 1
+                    dirName = p.dir_output+p.exp_id + '/D' + str(int(D_max))
+                    filename = dirName + '/' + str(k).zfill(5) + '_'
+                    filename = filename + str(i).zfill(3) + '.pk'
+                    df.loc[j] = [tau_awakening, tau_survive, D_max, filename]
+        elif isinstance(spars, str):
+            df = pd.read_csv(spars)
+        elif spars is None:
+            params = []
+            prd = itertools.product(tau_awakeningS, tau_surviveS, D_maxS)
+            for i in prd:
+                params.append(i)
+            k = 0
+            j = 0
+            for pp in params:
+                (tau_awakening, tau_survive, D_max) = pp
+                k += 1
+                i = 0
+                for experiment in range(p.nran):
+                    i += 1
+                    j += 1
+                    dirName = p.dir_output+p.exp_id + '/D' + str(int(D_max))
+                    filename = dirName + '/' + str(k).zfill(5) + '_'
+                    filename = filename + str(i).zfill(3) + '.pk'
+                    df.loc[j] = [tau_awakening, tau_survive, D_max, filename]
+        else:
+            if spars is not None:
+                print('spars must be dataframe, list or string')
+
+        # write files list
+        fn = self.config.filenames
+        fname = fn.dir_output + '/' + fn.exp_id
+        fname = fname + '/' + fn.pars_root + '.csv'
+        df.to_csv(fname, index=False)
+
+        self.params = df
+
+    def run(self, parallel=False, njobs=None, interactive=False):
+        """Run an experiment.
+
+        An experiment requires a set of at least three parameters, which are
+        taken from the configuration file.
+
+        Args:
+           parallel (boolean, optional). Flag to indicate if run is made using
+           the parallelized version.  Default: False.
+        """
         if njobs is not None:
             parallel = True
 
-        ll = []
-        for i in itertools.product(tau_awakeningS, tau_surviveS, D_maxS):
-            ll.append(i)
-
         if parallel:
             if njobs is None:
-                njobs = self.conf.p.njobs
+                njobs = self.config.p.njobs
             if interactive:
-                df, res = self.run_suite_II(ll, njobs, interactive)
+                res = self.run_suite_II(njobs, interactive)
             else:
-                self.run_suite_II(ll, njobs)
+                self.run_suite_II(njobs)
         else:
             if interactive:
-                df, res = self.run_suite(ll, interactive)
+                res = self.run_suite(interactive)
             else:
-                self.run_suite(ll)
+                self.run_suite()
 
         if interactive:
-            return df, res
+            return res
         else:
             return None
 
-    def run_suite_II(self, params, njobs, interactive=False):
+    def run_suite_II(self, njobs, interactive=False):
         """Run an experiment, parallel version.
 
         An experiment requires a set of at least three parameters, which are
@@ -676,20 +701,20 @@ class GalacticNetwork():
         params: the parameters
         njobs: number of jobs
         """
-        import pandas
         from joblib import Parallel, delayed
 
         Pll = Parallel(n_jobs=njobs, verbose=5, prefer="processes")
+        params = self.params.values.tolist()
         ids = np.array(range(len(params))) + 1
         ntr = [interactive]*len(params)
         z = zip([self]*len(params), params, ids, ntr)
         d_experiment = delayed(unwrap_experiment_self)
         results = Pll(d_experiment(i) for i in z)
 
-        df = pandas.DataFrame(columns=['tau_awakening', 'tau_survive',
-                                       'D_max', 'name'])
+        df = pd.DataFrame(columns=['tau_awakening', 'tau_survive',
+                                   'D_max', 'filename'])
 
-        p = self.conf.p
+        p = self.config.p
         k = 0
         j = 0
         for pp in params:
@@ -705,17 +730,17 @@ class GalacticNetwork():
                 df.loc[j] = [tau_awakening, tau_survive, D_max, filename]
 
         # write files
-        fn = self.conf.filenames
+        fn = self.config.filenames
         fname = fn.dir_output + '/' + fn.exp_id
         fname = fname + '/' + fn.pars_root + '.csv'
         df.to_csv(fname, index=False)
 
         if interactive:
-            return df, results
+            return results
         else:
             return None
 
-    def run_suite(self, params, interactive=False):
+    def run_suite(self, interactive=False):
         """Make experiment.
 
         Requires a single value of parameters.
@@ -732,9 +757,11 @@ class GalacticNetwork():
             None
         """
         from os import makedirs, path
-        import pandas
 
-        p = self.conf.p
+        print('USING RUN SUITE')
+
+        p = self.config.p
+        params = self.params.values.tolist()
 
         try:
             dirName = p.dir_output + p.exp_id+''
@@ -757,8 +784,6 @@ class GalacticNetwork():
             except FileExistsError:
                 print("Directory ", dirName, " already exists")
 
-        df = pandas.DataFrame(columns=['tau_awakening', 'tau_survive',
-                                       'D_max', 'name'])
         if p.showp:
             bf1 = "{desc}: {percentage:.4f}%|{bar}|"
             bf2 = "{n_fmt}/{total_fmt} ({elapsed}/{remaining})"
@@ -767,55 +792,33 @@ class GalacticNetwork():
         else:
             iterator = params
 
-        k = 0
-        j = 0
         results = []
         for pp in iterator:
-            (tau_awakening, tau_survive, D_max) = pp
+            (tau_awakening, tau_survive, D_max, filename) = pp
             pars = list(pp)
-            k += 1
-            i = 0
-            for experiment in range(p.nran):
-
-                i += 1
-                j += 1
-
-                dirName = p.dir_output+p.exp_id + '/D' + str(int(D_max))+'/'
-                filename = dirName + str(k).zfill(5) + '_'
-                filename = filename + str(i).zfill(3) + '.pk'
-                df.loc[j] = [tau_awakening, tau_survive, D_max, filename]
-
-                if path.isfile(filename):
-                    if p.overwrite:
-                        self.run_simulation(p, pars)
-                        pickle.dump(self.MPL, open(filename, "wb"))
-                    elif interactive:
-                        self.run_simulation(p, pars)
-                        MPL = self.MPL
-                        results.append(MPL)
-                else:
+            if path.isfile(filename):
+                if p.overwrite:
                     self.run_simulation(p, pars)
                     pickle.dump(self.MPL, open(filename, "wb"))
-                    if interactive:
-                        MPL = self.MPL
-                        results.append(MPL)
+                elif interactive:
+                    self.run_simulation(p, pars)
+                    MPL = self.MPL
+                    results.append(MPL)
+            else:
+                self.run_simulation(p, pars)
+                pickle.dump(self.MPL, open(filename, "wb"))
+                if interactive:
+                    MPL = self.MPL
+                    results.append(MPL)
 
             fn = ''.join([p.dir_output, p.exp_id, '/',
-                          self.conf.filenames.progress_root, '.csv'])
+                          self.config.filenames.progress_root, '.csv'])
             with open(fn, 'a') as file:
                 w = f"{tau_awakening}, {tau_survive}, {D_max}, {filename}\n"
                 file.write(w)
 
-        self.param_set = df
-
-        # write files
-        fn = self.conf.filenames
-        fname = fn.dir_output + '/' + fn.exp_id
-        fname = fname + '/' + fn.pars_root + '.csv'
-        df.to_csv(fname, index=False)
-
         if interactive:
-            return df, results
+            return results
         else:
             return None
 
@@ -825,9 +828,9 @@ class GalacticNetwork():
         A single value of parameters
 
         Args:
-            p (configuration object): configuration
-            pars (list): list of (3) parameters:
-                         tau_A, tau_S and D_max
+        p (configuration object): configuration
+        pars (list): list of (3) parameters:
+        tau_A, tau_S and D_max
 
         Raises:
             None
@@ -836,9 +839,9 @@ class GalacticNetwork():
             list of parameters as a named tuple
         """
         if p is None:
-            p = self.conf.p
+            p = self.config.p
         if pars is None:
-            ps = self.conf.p
+            ps = self.config.p
             tau_awakening = ps.tau_a_min
             tau_survive = ps.tau_s_min
             D_max = ps.d_max_min
@@ -1032,7 +1035,7 @@ class GalacticNetwork():
 
         self.MPL = MPL
 
-    def show_single_ccns(self, MPL=None):
+    def show_single_ccns(self, MPL=None, interactive=False):
         """Show simulation results.
 
         Args:
@@ -1061,30 +1064,39 @@ class GalacticNetwork():
                                                          CETIs[i][j+1][5],
                                                          CETIs[i][j+1][2],
                                                          CETIs[i][j+1][3], Dx))
+        if interactive:
+            return CETIs
 
 
-class results():
+class results(GalacticNetwork):
     """results: load and visualize results from simulations and experiments.
 
     description
     """
 
-    def __init__(self, conf=None):
+    """
+    To do:
+    - number of contacts
+    """
+
+    def __init__(self, G=None):
         """Instantiate a results object.
 
         Args:
             GalNet (GalacticNetwork class)
         """
-        # super().__init__()
         self.params = dict()
-        self.conf = conf
+        self.config = tuple()
+        if G is not None:
+            self.params = G.params
+            self.config = G.config
 
     def load(self):
         """Load parameter set and data.
 
         Load all data generated from an experiment.
         """
-        fn = self.conf.filenames
+        fn = self.config.filenames
         fname = fn.dir_output + fn.exp_id
         fname = fname + '/' + fn.pars_root + '.csv'
         df = pd.read_csv(fname)
@@ -1116,7 +1128,7 @@ class results():
         N = len(D)
         kcross = 0
 
-        for filename in D['name']:
+        for filename in D['filename']:
 
             try:
                 CETIs = pickle.load(open(filename, "rb"))
@@ -1126,9 +1138,9 @@ class results():
             M = len(CETIs)
             ncetis.append(M)
 
-            for i in range(M):  # experiments
+            for i in range(M):
 
-                k = len(CETIs[i])  # CETIs resulting from the experiment
+                k = len(CETIs[i])
                 inbox.append(k-1)
                 awaken.append(CETIs[i][0][5] - CETIs[i][0][4])
                 index.append(kcross)
@@ -1179,13 +1191,6 @@ class results():
                # chosen integer bins in multiplicity
                'count': count})  # distribution of the multiplicity of contacts
 
-    def plot_1d(self, key):
-        """Plot the histogram of a quantity in the experiment.
-
-        Make the plot of a given derived parameter.
-        """
-        return None
-
     def redux_2d(self, show_progress=False):
         """Reddux experiment.
 
@@ -1195,7 +1200,7 @@ class results():
         import numpy as np
 
         # parameters
-        p = self.conf.p
+        p = self.config.p
         tau_awakeningS = np.linspace(p.tau_a_min, p.tau_a_max, p.tau_a_nbins)
         tau_surviveS = np.linspace(p.tau_s_min, p.tau_s_max, p.tau_s_nbins)
 
@@ -1259,7 +1264,7 @@ class results():
         m1_d1 = np.transpose(m1_d1)
         m2_d1 = np.transpose(m2_d1)
 
-        fn = self.conf.filenames
+        fn = self.config.filenames
         fname = fn.dir_output + fn.exp_id
         fname1 = fname + '/m1.pk'
         fname2 = fname + '/m2.pk'
@@ -1272,7 +1277,7 @@ class results():
 
         return((m1_d1, m2_d1))
 
-    def show_ccns(self, i):
+    def show_ccns(self, i, interactive=False):
         """Show simulation results.
 
         Args:
@@ -1302,3 +1307,5 @@ class results():
                                                          CETIs[i][j+1][5],
                                                          CETIs[i][j+1][2],
                                                          CETIs[i][j+1][3], Dx))
+        if interactive:
+            return CETIs

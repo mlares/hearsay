@@ -35,6 +35,7 @@ API
    api/gettingstarted
    api/configuration
    api/usage
+   api/tutorial.rst
    api/hearsay
 
 
@@ -109,17 +110,16 @@ working directory is ``$working_dir``
 
    .. code-block::
 
-      from hearsay import hearsay
-      from sys import argv
-      conf = hearsay.parser(argv)
-      G = hearsay.GalacticNetwork(conf)
-      G.run_experiment()
-      R = hearsay.results(conf)
-      R.load()
-      res = R.redux_1d()
-      R.plot_1d()
-                                                      
-   A file with the name entered in the variable ``plot_fname`` of the
-   configuration file will be saved in the directory ``plt``.
+   conf = hearsay.parser('hearsay_dir/set/experiment.ini')
+   G = hearsay.GalacticNetwork(conf)
+   G.set_parameters()
+   net = G.run(interactive=True)
+   R = hearsay.results(conf)
+   R.load()
+   res = R.redux_1d()
+   plt.hist(res['A'])
+   plt.show()
+    
+A file with the name entered in the variable ``plot_fname`` of the
+configuration file will be saved in the directory ``plt``.
 
-                      

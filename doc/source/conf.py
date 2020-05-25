@@ -12,7 +12,18 @@
 #
 import os
 import sys
-sys.path.insert(0, os.path.abspath('../../hearsay/'))
+import pathlib
+
+# sys.path.insert(0, os.path.abspath('../../hearsay/'))
+
+
+CURRENT_PATH = pathlib.Path(os.path.abspath(os.path.dirname(__file__)))
+HEARSAY_PATH = CURRENT_PATH.parent.parent
+
+sys.path.insert(0, str(HEARSAY_PATH))
+
+from hearsay import hearsay
+from hearsay import olists
 
 
 # -- Project information -----------------------------------------------------
@@ -20,6 +31,11 @@ sys.path.insert(0, os.path.abspath('../../hearsay/'))
 project = 'hearsay'
 copyright = '2020, Marcelo Lares'
 author = 'Marcelo Lares'
+
+# The short X.Y version.
+# version = hearsay.__version__
+# The full version, including alpha/beta/rc tags
+# release = hearsay.__version__
 
 
 # -- General configuration ---------------------------------------------------
@@ -29,6 +45,7 @@ author = 'Marcelo Lares'
 # ones.
 extensions = [
         'sphinx.ext.autodoc',
+        'sphinx.ext.napoleon',
         'sphinxcontrib.bibtex',
 ]
 
@@ -38,7 +55,11 @@ templates_path = ['_templates']
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = []
+exclude_patterns = [
+    'build',
+    '**.ipynb_checkpoints',
+    'source/.ipynb_checkpoints/*',
+    'source/tutorial/.ipynb_checkpoints/*']
 
 
 # -- Options for HTML output -------------------------------------------------

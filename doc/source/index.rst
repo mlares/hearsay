@@ -39,9 +39,6 @@ API
    api/hearsay
 
 
-..   api/testing
-..   api/todo
-
 Indices and tables
 ******************
 

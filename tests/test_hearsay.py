@@ -16,29 +16,29 @@ PATH = pathlib.Path(os.path.abspath(os.path.dirname(__file__)))
 # PARSING FILENAME
 
 def test_parser_01():
-    conf = hearsay.parser()
-    assert isinstance(conf, hearsay.parser)
+    conf = hearsay.Parser()
+    assert isinstance(conf, hearsay.Parser)
 
 def test_parser_02():
-    conf = hearsay.parser()
+    conf = hearsay.Parser()
     fname = PATH / '../set/experiment_test.ini'
     conf.check_file(fname)
     assert isinstance(conf.filename, str)
 
 def test_parser_03():
-    conf = hearsay.parser()
+    conf = hearsay.Parser()
     fname = PATH / '../set/experiment_test.ini'
     conf.check_file(fname)
     conf.check_file('../set/experiment_test.ini')
     assert conf.filename == '../set/experiment_test.ini'
  
 def test_parser_04():
-    conf = hearsay.parser()
+    conf = hearsay.Parser()
     conf.check_file()
     assert conf.filename == '../set/experiment.ini'
  
 def test_parser_05():
-    conf = hearsay.parser()
+    conf = hearsay.Parser()
     conf.check_file()
     fname = PATH / '../set/experiment_test.ini'
     conf.check_file(fname)
@@ -47,7 +47,7 @@ def test_parser_05():
     assert len(conf.filenames) == 8
  
 def test_parser_06():
-    conf = hearsay.parser()
+    conf = hearsay.Parser()
     conf.check_file()
     fname = PATH / '../set/experiment_test.ini'
     conf.check_file(fname)
@@ -55,46 +55,46 @@ def test_parser_06():
     assert len(conf.p) == 25
 
 def test_parser_07():
-    conf = hearsay.parser()
+    conf = hearsay.Parser()
     assert isinstance(conf['experiment'], configparser.SectionProxy)
 
 def test_parser_08():
-    conf = hearsay.parser()
+    conf = hearsay.Parser()
     assert isinstance(conf['experiment']['exp_ID'], str)
 
 def test_parser_09():
-    conf = hearsay.parser('non_existent_file')
-    assert isinstance(conf, hearsay.parser)
+    conf = hearsay.Parser('non_existent_file')
+    assert isinstance(conf, hearsay.Parser)
                
 def test_parser_10():
-    conf = hearsay.parser(['','non_existent_file'])
-    assert isinstance(conf, hearsay.parser)
+    conf = hearsay.Parser(['', 'non_existent_file'])
+    assert isinstance(conf, hearsay.Parser)
                   
 def test_parser_11():
-    conf = hearsay.parser()
+    conf = hearsay.Parser()
     conf.check_file()
     fname = PATH / '../set/experiment_test.ini'
     conf.check_file(fname)
     assert len(conf.filenames) == 8                 
  
 def test_parser_12():
-    conf = hearsay.parser(['','../set/experiment_test.ini'])
+    conf = hearsay.Parser(['', '../set/experiment_test.ini'])
     conf.check_file(fname)
     assert len(conf.filenames) == 8                 
  
 def test_parser_13():
-    conf = hearsay.parser(['non_existent_file'])
+    conf = hearsay.Parser(['non_existent_file'])
     assert len(conf.filenames) == 8                 
  
 def test_parser_14():
-    conf = hearsay.parser()
+    conf = hearsay.Parser()
     fname = PATH / '../set/experiment_test.ini'
     conf.check_file(fname)
     conf.check_settings()
     assert len(conf.filenames) == 8                 
  
 def test_parser_14():
-    conf = hearsay.parser()
+    conf = hearsay.Parser()
     fname = PATH / '../set/experiment_test.ini'
     conf.check_file(fname)
     conf.load_config(['dir_output'], ['non_existent_dir'])
@@ -122,7 +122,7 @@ lista = l1 + l2 + l3
 
 @pytest.mark.parametrize('par, key, val, expected', lista)
 def test_parser_12(par, key, val, expected):
-    conf = hearsay.parser()
+    conf = hearsay.Parser()
     conf.check_file()
     fname = PATH / '../set/experiment_test.ini'
     conf.check_file(fname)
@@ -136,8 +136,8 @@ def test_parser_12(par, key, val, expected):
 # Galactic Network class
 
 def test_GN_01():
-    conf = hearsay.parser()
-    G = hearsay.GalacticNetwork(conf)
+    conf = hearsay.Parser()
+    G = hearsay.C3Net(conf)
     conf.load_config(['nran'], ['7'])
     tau_awakening = 20000
     tau_survive = 20000
@@ -152,9 +152,9 @@ def test_GN_01():
     assert len(res)==1
      
 def test_GN_02():
-    conf = hearsay.parser()
+    conf = hearsay.Parser()
     conf.load_config(['nran'], ['3'])
-    G = hearsay.GalacticNetwork(conf)
+    G = hearsay.C3Net(conf)
     G.set_parameters()
     A = [20000, 30000, 40000]
     S = [10000]
@@ -164,9 +164,9 @@ def test_GN_02():
     assert len(res)==9
  
 def test_GN_03():
-    conf = hearsay.parser()
+    conf = hearsay.Parser()
     conf.load_config(['nran'], ['2'])
-    G = hearsay.GalacticNetwork(conf)
+    G = hearsay.C3Net(conf)
     G.set_parameters()
     A = [20000, 30000, 40000]
     S = [10000, 12000, 14000]
@@ -176,9 +176,9 @@ def test_GN_03():
     assert len(res)==54
  
 def test_GN_04():
-    conf = hearsay.parser()
+    conf = hearsay.Parser()
     conf.load_config(['nran'], ['1'])
-    G = hearsay.GalacticNetwork(conf)
+    G = hearsay.C3Net(conf)
     G.set_parameters()
     A = [20000, 30000]
     S = [10000, 12000]
@@ -189,9 +189,9 @@ def test_GN_04():
     assert len(res)==4
      
 def test_GN_05():
-    conf = hearsay.parser()
+    conf = hearsay.Parser()
     conf.load_config(['nran'], ['1'])
-    G = hearsay.GalacticNetwork(conf)
+    G = hearsay.C3Net(conf)
     G.set_parameters()
     A = [20000, 30000]
     S = [10000, 12000]
@@ -199,15 +199,15 @@ def test_GN_05():
     lista = [A, S, D]
     G.set_parameters(spars=lista)
     res = G.run(interactive=True)
-    R = hearsay.results(G)
+    R = hearsay.Results(G)
     R.load()
     res = R.redux_1d()
     assert len(res)==11
  
 def test_GN_06():
-    conf = hearsay.parser()
+    conf = hearsay.Parser()
     conf.load_config(['nran'], ['1'])
-    G = hearsay.GalacticNetwork(conf)
+    G = hearsay.C3Net(conf)
     G.set_parameters()
     A = [20000, 30000]
     S = [10000, 12000]
@@ -215,15 +215,15 @@ def test_GN_06():
     lista = [A, S, D]
     G.set_parameters(spars=lista)
     res = G.run(interactive=True)
-    R = hearsay.results(G)
+    R = hearsay.Results(G)
     R.load()
     res = R.redux_2d()
     assert len(res)==2
 
 def test_GN_07():
-    conf = hearsay.parser()
+    conf = hearsay.Parser()
     conf.load_config(['nran'], ['1'])
-    G = hearsay.GalacticNetwork(conf)
+    G = hearsay.C3Net(conf)
     G.set_parameters()
     A = [20000]
     S = [10000]
@@ -235,9 +235,9 @@ def test_GN_07():
     assert isinstance(res, dict)
  
 def test_GN_08():
-    conf = hearsay.parser()
+    conf = hearsay.Parser()
     conf.load_config(['nran', 'njobs', 'run_parallel'], ['10', '2', 'Y'])
-    G = hearsay.GalacticNetwork(conf)
+    G = hearsay.C3Net(conf)
     G.set_parameters()
     A = [20000]
     S = [10000]
@@ -253,9 +253,9 @@ def test_GN_08():
 # Results class
 
 def test_results_01():
-    conf = hearsay.parser()
+    conf = hearsay.Parser()
     conf.load_config(['nran'], ['1'])
-    G = hearsay.GalacticNetwork(conf)
+    G = hearsay.C3Net(conf)
     G.set_parameters()
     A = [20000, 30000]
     S = [10000, 12000]
@@ -264,11 +264,10 @@ def test_results_01():
     G.set_parameters(spars=lista)
     res = G.run(interactive=True)
 
-    R = hearsay.results(G)
+    R = hearsay.Results(G)
     R.load()
     res = R.show_ccns(0, True)
     assert isinstance(res, dict)
-     
 
 # Testing:
 # cd tests/

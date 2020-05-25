@@ -1,6 +1,24 @@
 """HEARSAY.
 
-description
+This module contains tools to compute and analyze numerical simulations of
+a Galaxy with constrained causally connected nodes. It simulates a 2D
+simplified version of a disk galaxy and perform discrete event simulations
+to explore three parameters:
+1. the mean time for the appeareance of new nodes,
+2. the mean lifetime of the nodes, and
+3. the maximum reach of signals.
+
+A simulation is a realization of the Constrained Causally Connected Network
+(C3Net) model. The details of this model are explained in
+Lares, Gramajo & Funes (under review).
+
+Classes in this module:
+- Parser
+- C3Net
+- Results
+
+Additionally, it contains the function unwrap_run which is used for parallel
+runs with the joblib library.
 """
 
 import numpy as np
@@ -10,22 +28,28 @@ import pandas as pd
 import pickle
 import sys
 from tqdm import tqdm
+from hearsay.olists import OrderedList
 
 
-class parser(ConfigParser):
+class Parser(ConfigParser):
     """parser class.
 
-    manipulation of parser from ini files
+    Manipulation of configuration parameters. This method allows to read a
+    configuration file or to set parameters for a Constrained Causally
+    Conected Network (C3Net) model.
     """
 
     def __init__(self, argv=None, *args, **kwargs):
         """Initialize a parser.
 
-        Args:
+        Parameters
+        ----------
             None
-        Returns:
+        Returns
+        -------
             None
-        Raises:
+        Raises
+        ------
             None
         """
         super().__init__()
@@ -40,13 +64,16 @@ class parser(ConfigParser):
     def check_file(self, sys_args=""):
         """Parse paramenters for the simulation from a .ini file.
 
-        Args:
+        Parameters
+        ----------
             filename (str): the file name of the map to be read
 
-        Raises:
+        Raises
+        ------
             None
 
-        Returns:
+        Returns
+        -------
             None
         """
         from os.path import isfile
@@ -90,13 +117,16 @@ class parser(ConfigParser):
     def read_config_file(self):
         """Parse paramenters for the simulation from a .ini file.
 
-        Args:
+        Parameters
+        ----------
             None
 
-        Raises:
+        Raises
+        ------
             None
 
-        Returns:
+        Returns
+        -------
             None
         """
         self.read(self.filename)
@@ -104,13 +134,16 @@ class parser(ConfigParser):
     def load_filenames(self):
         """Make filenames based on info in config file.
 
-        Args:
+        Parameters
+        ----------
             None
 
-        Raises:
+        Raises
+        ------
             None
 
-        Returns:
+        Returns
+        -------
             list of filenames
         """
         from collections import namedtuple
@@ -152,13 +185,16 @@ class parser(ConfigParser):
                     *args, **kwargs):
         """Load parameters from config file.
 
-        Args:
+        Parameters
+        ----------
             None
 
-        Raises:
+        Raises
+        ------
             None
 
-        Returns:
+        Returns
+        -------
             list of parameters as a named tuple
         """
         if isinstance(keys, list):
@@ -301,13 +337,16 @@ class parser(ConfigParser):
     def check_settings(self):
         """Check if parameters make sense.
 
-        Args:
+        Parameters
+        ----------
             None
 
-        Raises:
+        Raises
+        ------
             None
 
-        Returns:
+        Returns
+        -------
             Exception if settings have inconsistencies.
         """
         from os import path, makedirs
@@ -339,161 +378,17 @@ class parser(ConfigParser):
                 pass
 
 
-class Node:
-    """Node and linked list classes.
-
-    This class contains tools to manipulate nodes.  A node is
-    a point in the Galaxy that a acquires the ability to emit
-    and receive messages at a given time.  A set of nodes make
-    a linked list.
-    """
-
-    def __init__(self, data):
-        """Initialize a node.
-
-        Args:
-            data: (single value)
-            A number or value that can be compared and supports
-            the <grater than> operator.
-        Returns:
-            None
-        Raises:
-            None
-        """
-        self.data = data
-        self.next = None
-
-    def getData(self):
-        """Get data in a node.
-
-        Args:
-            None
-        """
-        return self.data
-
-    def getNext(self):
-        """Get the next node, if exists.
-
-        Args:
-            None
-        """
-        return self.next
-
-    def setNext(self, newnext):
-        """Set the next node.
-
-        Args:
-            Node
-        """
-        self.next = newnext
-
-
-class OrderedList:
-    """Ordered list class.
-
-    Tools to make ordered lists. This structure is useful because it can be
-    traversed and a new node can be added at any stage.
-    # based on http://interactivepython.org/courselib/static/pythonds/
-    #  BasicDS/ImplementinganOrderedList.html
-    """
-
-    def __init__(self):
-        """Initialize ordered list.
-
-        Args:
-            None
-        """
-        self.head = None
-        self.last = None
-
-    def show(self):
-        """Print an ordered list.
-
-        Args:
-            None
-        """
-        state = ['awakening', 'doomsday', 'contact ', 'blackout']
-        current = self.head
-        while current is not None:
-
-            if current.getData()[2] is None:
-                print("   %6.2f  %14s - %i " %
-                      tuple([current.getData()[0],
-                             state[current.getData()[3]-1],
-                             current.getData()[1]]))
-            else:
-                print("   %6.2f  %14s - %i <    %i" %
-                      tuple([current.getData()[0],
-                             state[current.getData()[3]-1],
-                             current.getData()[1],
-                             current.getData()[2]]))
-
-            current = current.getNext()
-
-    def add(self, data):
-        """Add an element to an ordered list.
-
-        Args:
-            Data (number)
-        """
-        current = self.head
-        previous = None
-        stop = False
-        while current is not None and not stop:
-            if current.getData()[0] > data[0]:
-                stop = True
-            else:
-                previous = current
-                current = current.getNext()
-        temp = Node(data)
-        if previous is None:
-            temp.setNext(self.head)
-            self.head = temp
-        else:
-            temp.setNext(current)
-            previous.setNext(temp)
-
-    def remove_first(self):
-        """Remove first element.
-
-        Args:
-            None
-        """
-        self.head = self.head.getNext()
-
-    def isEmpty(self):
-        """Ask if list is empty.
-
-        Args:
-            None
-        """
-        return self.head is None
-
-    def size(self):
-        """Retrieve the size of the list.
-
-        Args:
-            None
-        """
-        current = self.head
-        count = 0
-        while current is not None:
-            count = count + 1
-            current = current.getNext()
-        return count
-
-
-def unwrap_experiment_self(arg, **kwarg):
+def unwrap_run(arg, **kwarg):
     """Wrap the serial function for parallel run.
 
     This function just call the serialized version, but allows to run
     it concurrently.
     """
-    return GalacticNetwork.run_suite(*arg, **kwarg)
+    return C3Net.run_suite(*arg, **kwarg)
 
 
-class GalacticNetwork():
-    """GalacticNetwork: network of contacts from CCNs.
+class C3Net():
+    """C3Net: Constrained Causally Connected Network model.
 
     methods:
         init:
@@ -505,7 +400,7 @@ class GalacticNetwork():
         __str__:
             None
         run:
-            Run a suite of simulations for the full parametet ser in
+            Run a suite of simulations for the full parametet set in
             the configuration file.
         run_suite:
             Run a suite of simulations for a given parameter set.
@@ -514,12 +409,15 @@ class GalacticNetwork():
             be run in parallel.
         run_simulation:
             Run a simulation for a point in parameter space.
+        show_single_ccns:
+            Show the contents of a simulation run.
     """
 
     def __init__(self, conf=None):
         """Instantiate Galaxy object.
 
-        Args:
+        Parameters
+        ----------
             None
         """
         self.params = None
@@ -528,7 +426,8 @@ class GalacticNetwork():
     def __len__(self):
         """Return the number of contacts.
 
-        Args:
+        Parameters
+        ----------
             None
         """
         pass
@@ -536,7 +435,8 @@ class GalacticNetwork():
     def __repr__(self):
         """Represent with a string.
 
-        Args:
+        Parameters
+        ----------
             None
         """
         print('message')
@@ -544,7 +444,8 @@ class GalacticNetwork():
     def __str__(self):
         """Represent with a string.
 
-        Args:
+        Parameters
+        ----------
             None
         """
         print('message')
@@ -555,7 +456,8 @@ class GalacticNetwork():
         """Set parameters for the experiment.
 
         If no arguments are given, the parameters are set from the ini file.
-        Args:
+        Parameters
+        ----------
         spars (dataframe, list or string, optional):
         Parameters to set the experiment.
         If spars is a pandas DataFrame, it must contain the keys:
@@ -600,6 +502,8 @@ class GalacticNetwork():
         df = pd.DataFrame(columns=['tau_awakening', 'tau_survive',
                                    'D_max', 'filename'])
         if isinstance(spars, pd.DataFrame):
+            if p.verbose:
+                print('parameters dataframe deteted')
             params = []
             prd = itertools.product(tau_awakeningS, tau_surviveS, D_maxS,
                                     filenames)
@@ -611,6 +515,8 @@ class GalacticNetwork():
                 (tau_awakening, tau_survive, D_max, filename) = pp
                 df.loc[j] = [tau_awakening, tau_survive, D_max, filename]
         elif isinstance(spars, list):
+            if p.verbose:
+                print('parameters list deteted')
             params = []
             prd = itertools.product(tau_awakeningS, tau_surviveS, D_maxS)
             for i in prd:
@@ -629,29 +535,48 @@ class GalacticNetwork():
                     filename = filename + str(i).zfill(3) + '.pk'
                     df.loc[j] = [tau_awakening, tau_survive, D_max, filename]
         elif isinstance(spars, str):
+            if p.verbose:
+                print('parameters file detected')
             df = pd.read_csv(spars)
         elif spars is None:
+            print('default action: load from config file')
             params = []
             prd = itertools.product(tau_awakeningS, tau_surviveS, D_maxS)
             for i in prd:
                 params.append(i)
             k = 0
             j = 0
+
+            A = []
+            S = []
+            D = []
+            F = []
+
+            outdir = p.dir_output + p.exp_id + '/D'
             for pp in params:
                 (tau_awakening, tau_survive, D_max) = pp
                 k += 1
                 i = 0
                 for experiment in range(p.nran):
+                    A.append(tau_awakening)
+                    S.append(tau_survive)
+                    D.append(D_max)
+
                     i += 1
                     j += 1
-                    dirName = p.dir_output+p.exp_id + '/D' + str(int(D_max))
-                    filename = dirName + '/' + str(k).zfill(5) + '_'
-                    filename = filename + str(i).zfill(3) + '.pk'
-                    df.loc[j] = [tau_awakening, tau_survive, D_max, filename]
+                    parts = [outdir, str(int(D_max)), '/', str(k).zfill(5),
+                             '_', str(i).zfill(3) + '.pk']
+                    filename = ''.join(parts)
+
+                    F.append(filename)
+
+            df['tau_awakening'] = A
+            df['tau_survive'] = S
+            df['D_max'] = D
+            df['filename'] = F
         else:
             if spars is not None:
                 print('spars must be dataframe, list or string')
-
         # write files list
         fn = self.config.filenames
         fname = fn.dir_output + '/' + fn.exp_id
@@ -666,9 +591,44 @@ class GalacticNetwork():
         An experiment requires a set of at least three parameters, which are
         taken from the configuration file.
 
-        Args:
-           parallel (boolean, optional). Flag to indicate if run is made using
-           the parallelized version.  Default: False.
+        Parameters
+        ----------
+        parallel : Boolean
+            Flag to indicate if run is made using the parallelized version.
+            Default: False.
+        njobs : int
+            Number of concurrent jobs for the parallel version.
+            If parallel is False njobs is ignored.
+        interactive : boolean
+            Flag to indicate if the result of the simulation suite is returned
+            as a variable.
+
+        Returns
+        -------
+        res: list
+            Only returned if interactive=True.
+            Contains the results from the simulations.  The size of the
+            list is the number of simulations in the experiment, i.e., the
+            number of lines in self.params.
+            Each element of the list is a dictionary containing the complete
+            list of CCNs and their contacts.
+
+        See also
+        --------
+        hearsay.results.ccn_stats
+
+        Example
+        -------
+        If the following experiment is set:
+        >>> conf.load_config(['nran'], ['2']
+        >>> A = [5000, 10000, 20000]
+        >>> S = [20000]
+        >>> D = [20000]
+        >>> G.set_parameters(A=A, S=S, D=D)
+        then a total of 6 experiments will be performed.  The result of this
+        function is a list of length 6, each element containing an element that
+        can be printed with the show_single_ccns method. See that method for
+        more details.
         """
         if njobs is not None:
             parallel = True
@@ -697,7 +657,8 @@ class GalacticNetwork():
         An experiment requires a set of at least three parameters, which are
         taken from the configuration file.
 
-        Args:
+        Parameters
+        ----------
         params: the parameters
         njobs: number of jobs
         """
@@ -708,7 +669,7 @@ class GalacticNetwork():
         ids = np.array(range(len(params))) + 1
         ntr = [interactive]*len(params)
         z = zip([self]*len(params), params, ids, ntr)
-        d_experiment = delayed(unwrap_experiment_self)
+        d_experiment = delayed(unwrap_run)
         results = Pll(d_experiment(i) for i in z)
 
         df = pd.DataFrame(columns=['tau_awakening', 'tau_survive',
@@ -746,14 +707,17 @@ class GalacticNetwork():
         Requires a single value of parameters.
         Writes output on a file
 
-        Args:
+        Parameters
+        ----------
             params (list): A list containing all parameters for the
             simulation.  Format, e.g.: [(A1,S1,D1), (A2,S2,D2)]
 
-        Raises:
+        Raises
+        ------
             None
 
-        Returns:
+        Returns
+        -------
             None
         """
         from os import makedirs, path
@@ -785,7 +749,7 @@ class GalacticNetwork():
                 print("Directory ", dirName, " already exists")
 
         if p.showp:
-            bf1 = "{desc}: {percentage:.4f}%|{bar}|"
+            bf1 = "{desc}: {percentage:.4f}%|"
             bf2 = "{n_fmt}/{total_fmt} ({elapsed}/{remaining})"
             bf = ''.join([bf1, bf2])
             iterator = tqdm(params, bar_format=bf)
@@ -827,16 +791,34 @@ class GalacticNetwork():
 
         A single value of parameters
 
-        Args:
+        Parameters
+        ----------
         p (configuration object): configuration
         pars (list): list of (3) parameters:
         tau_A, tau_S and D_max
 
-        Raises:
+        Raises
+        ------
             None
 
-        Returns:
-            list of parameters as a named tuple
+        Returns
+        -------
+        MPL: dict
+
+           (ID of CCN,
+            ID of CCN (repeated),
+            x,
+            y,
+            time of A event,
+            time of D event)
+
+        Moreover, if there are contacts:
+           (ID of receiving CCN,
+            ID of emiting CCN,
+            x of emiting CCN,
+            y of emiting CCN,
+            time of C event,
+            time of B event)
         """
         if p is None:
             p = self.config.p
@@ -1038,7 +1020,8 @@ class GalacticNetwork():
     def show_single_ccns(self, MPL=None, interactive=False):
         """Show simulation results.
 
-        Args:
+        Parameters
+        ----------
             None
         """
         if MPL is None:
@@ -1068,7 +1051,7 @@ class GalacticNetwork():
             return CETIs
 
 
-class results(GalacticNetwork):
+class Results(C3Net):
     """results: load and visualize results from simulations and experiments.
 
     description
@@ -1082,8 +1065,10 @@ class results(GalacticNetwork):
     def __init__(self, G=None):
         """Instantiate a results object.
 
-        Args:
-            GalNet (GalacticNetwork class)
+        Parameters
+        ----------
+        G: C3Net object
+            An object containing all the data about the simulation suite.
         """
         self.params = dict()
         self.config = tuple()
@@ -1102,10 +1087,171 @@ class results(GalacticNetwork):
         df = pd.read_csv(fname)
         self.params = df
 
-    def redux_1d(self, subset=None):
+    def ccn_stats(self, CCN):
+        """Return statistics for a single causally connected network.
+
+        This corresponds to a single simulation run, that gives a list of
+        nodes, its properties and its contacts.  The properties of a node are
+        the ID, the times of the A and D events and the postition in the
+        (simulated) Galaxy.
+
+        Parameters
+        ----------
+        CCN : dict
+            An object (as read from pickle files) that represents a network of
+            CCNs from a single simulation run
+
+        Returns
+        -------
+        stats : tuple
+            A tuple containing several statistics about the network.
+
+
+        Notes
+        -----
+            The stats tuple includes parameters with counters (1, 2, 3),
+            parameters with CCNs values (4-7) and
+            parameters with contacts values (8-11)
+
+            01. N : Total number of CCNs in the full period. Length=1
+
+            02. M : Total number of contacts (i.e., CCNs that are on the
+                    space-time cone of another CCN.)
+
+            03. K : Total number of CCNs that make at least one contact
+                    (i.e., CCNs that are on the space-time cone of at least
+                    another CCN.)
+
+            04. lP : Time periods for each CCN.  Equivalent to the time span
+                     between the A and D events. Length=N
+
+            05. lI : Number of contacts each CETI receives. Length=N
+
+            06. lX : X position within the Galaxy disc. Length=N
+
+            07. lY : Y position within the Galaxy disc. Length=N
+
+            08. lL : Distances between contacted nodes. Length=K
+
+            09. lH : Duration of each contact. Length=K
+
+            10. lW : Time elapsed from awakening to contact. Length=K
+
+            11. lF : Time elapsed from awakening to the first contact.
+        """
+        N = len(CCN)
+        M = 0
+        K = 0
+
+        lP = []
+        lI = []
+        lX = []
+        lY = []
+        lL = []
+        lH = []
+        lW = []
+        lF = []
+
+        for i in range(N):
+
+            k = len(CCN[i])
+            lI.append(k-1)
+            lP.append(CCN[i][0][5] - CCN[i][0][4])
+            lX.append(CCN[i][0][2])
+            lY.append(CCN[i][0][3])
+
+            firstcontact = 1.e8
+
+            for j in range(1, k):  # traverse contacts
+
+                earlier = CCN[i][j][4] - CCN[i][0][4]
+                firstcontact = min(earlier, firstcontact)
+                Dx = np.sqrt(((
+                    np.array(CCN[i][0][2:4]) -
+                    np.array(CCN[i][j][2:4]))**2).sum())
+
+                lW.append(earlier)
+                lL.append(Dx)
+                lH.append(CCN[i][j][5] - CCN[i][j][4])
+
+            if k > 1:
+                lF.append(firstcontact)
+
+        return (N, M, K), (lP, lI, lX, lY, lL, lH, lW, lF)
+
+    def redux(self, subset=None):
+        """Redux experiment.
+
+        Given a set of parameters, returns the global values
+        """
+        import pickle
+
+        if subset is None:
+            D = self.params
+        else:
+            D = self.params[subset]
+
+        N = []
+        M = []
+        K = []
+
+        lP = []
+        lI = []
+        lX = []
+        lY = []
+        lL = []
+        lH = []
+        lW = []
+        lF = []
+
+        for filename in D['filename']:
+
+            try:
+                CETIs = pickle.load(open(filename, "rb"))
+            except EOFError:
+                CETIs = []
+
+            t1, t2 = self.ccn_stats(CETIs)
+
+            N.append(t1[0])
+            M.append(t1[1])
+            K.append(t1[2])
+            lP.append(t2[0])
+            lI.append(t2[1])
+            lX.append(t2[2])
+            lY.append(t2[3])
+            lL.append(t2[4])
+            lH.append(t2[5])
+            lW.append(t2[6])
+            lF.append(t2[7])
+
+        return({
+            'N': N,
+            'M': M,
+            'K': K,
+            'lP': lP,
+            'lI': lI,
+            'lX': lX,
+            'lY': lY,
+            'lL': lL,
+            'lH': lH,
+            'lW': lW,
+            'lF': lF})
+
+    def redux_1d(self, subset=None, applyto=None):
         """Reddux experiment.
 
-        Similar to previous
+        Compute statistics for the set of parameters limited to subset
+
+        Parameters
+        ----------
+        subset: logical array
+            Filter for the full parameter set.
+        applyto: string
+            Name of the variable to be used as X-axis
+        Results
+        -------
+
         """
         import pickle
         import numpy as np
@@ -1280,7 +1426,8 @@ class results(GalacticNetwork):
     def show_ccns(self, i, interactive=False):
         """Show simulation results.
 
-        Args:
+        Parameters
+        ----------
             None
         """
         filename = self.params.loc[i][3]

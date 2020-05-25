@@ -27,15 +27,20 @@ from setuptools import setup, find_packages
 PATH = pathlib.Path(os.path.abspath(os.path.dirname(__file__)))
 
 REQUIREMENTS = [
-    "numpy", "attrs",
-    "matplotlib", "seaborn"]
+    "numpy",
+    "attrs",
+    "pandas",
+    "tqdm",
+    "joblib",
+    "configparser",
+    "matplotlib"]
 
 with open(PATH / "README.rst") as fp:
     LONG_DESCRIPTION = fp.read()
  
 DESCRIPTION = (
-    "Tools to perform simulations of a network of connected nodes"
-    "in the Galaxy")
+    "Tools to perform simulations of a C3Net model"
+    )
 
 with open(PATH / "hearsay" / "__init__.py") as fp:
     VERSION = [

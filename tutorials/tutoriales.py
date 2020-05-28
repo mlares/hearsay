@@ -39,9 +39,6 @@ res = G.run(interactive=True)
 G.show_single_ccns(res[0])
 
 
-
-
-
 # TUTORIAL 3: experiment from ini file masked
 
 conf = hearsay.Parser()
@@ -85,9 +82,6 @@ for a in A:
     s.append(stat)
 
 
-
-
-
 # TUTORIAL 5: experiment with custom parameters
 
 conf = hearsay.Parser()
@@ -122,14 +116,9 @@ res2 = R.redux([False, True, False])
 res3 = R.redux([False, False, True])
 
 
-
-
-
-
 # wake up  despertarse (awaken) number if ccns
 # hold on  mantener
 # wait in  esperar que algo llegue (w) # time elapsed from awakening to contact
-
 # speak_up
 # get in
 # call_in
@@ -140,7 +129,6 @@ res3 = R.redux([False, False, True])
 # awaken  = wake_up  : times of awakenings
 # waiting = wait_in  : waiting times from awakening to first contact
 # hangon  = hang_on  : period of two way communication
-# 
 # firstc  = come_out : time of first contact (incoming)
 # index   = keep_up  : index 
 # inbox   = sign_up  : number of contacts per node
@@ -153,67 +141,6 @@ res3 = R.redux([False, False, True])
 #           t_first
 #           dt_twoway
 #           dt_wait
-
-
-
-# class ccn():
-#     """Class for causal contact nodes.
-# 
-#     methods:
-#         init:
-#             creates a node
-#         __len__:
-#             None
-#         __repr__:
-#             None
-#         __str__:
-#             None
-#     """
-# 
-#     def __init__(self):
-#         """Initialize.
-# 
-#         Args:
-#             None
-#         """
-#         self.state = 'pre-awakening'
-#         self.received = 0
-#         self.delivered = 0
-#         self.twoway = 0
-#         self.t_awakening = 0.
-#         self.t_doomsday = 0.
-#         self.n_listening = 0.
-#         self.n_listened = 0.
-# 
-#     def __len__(self):
-#         """Get the number of contacts for this node.
-# 
-#         Args:
-#             None
-#         """
-#         return self.received
-# 
-#     def __repr__(self):
-#         """Representation for print.
-# 
-#         Args:
-#             None
-#         """
-#         return 'Causal contact node in state {!s}, having\
-#                 {!i} received signals and {!i} times listened'.format(
-#             self.state, self.received, self.delivered)
-# 
-#     def __str__(self):
-#         """Show the node as a string.
-# 
-#         Args:
-#             None
-#         """
-#         return 'Causal contact node in state {!s}, having\
-#                 {!i} received signals and {!i} times listened'.format(
-#             self.state, self.received, self.delivered)
-#  
-
 
 # Verify lifetimes are exponential
 
@@ -300,5 +227,3 @@ plt.step(xx, yy)
 plt.xscale('log')
 plt.show()
 
-
-# FIG. 6 :::::::::::::::::::

@@ -10,7 +10,7 @@ to explore three parameters:
 
 A simulation is a realization of the Constrained Causally Connected Network
 (C3Net) model. The details of this model are explained in
-Lares, Gramajo & Funes (under review).
+Lares, Funes & Gramajo (under review).
 
 Classes in this module:
 - Parser
@@ -465,6 +465,30 @@ class C3Net():
         """
         print('message')
 
+    def prepare_dirs(self, filenames):
+        """Prepare directories for experiments from dataframes.
+
+        Takes a list of paths and filenames and check if all
+        paths exist.
+
+        Parameters
+        ----------
+        filenames : list
+            A list with all filenames
+        Returns
+        -------
+            None
+        """
+        from os import path, makedirs
+        for f in filenames:
+            s = f.split('/')
+            for k in range(1, len(s)):
+                d = '/'.join(s[:k])
+                if d == '.' or d == '..':
+                    continue
+                if not path.isdir(d):
+                    makedirs(d)
+
     def set_parameters(self, spars=None,
                        A=None, S=None, D=None,
                        write_file=False):
@@ -498,7 +522,8 @@ class C3Net():
                 tau_awakeningS = spars['tau_awakening']
                 tau_surviveS = spars['tau_survive']
                 D_maxS = spars['D_max']
-                # filenames = spars['filename']
+                filenames = spars['filename']
+                self.prepare_dirs(filenames)
             elif isinstance(spars, list):
                 tau_awakeningS = spars[0]
                 tau_surviveS = spars[1]
@@ -1144,6 +1169,7 @@ class Results(C3Net):
             10. lW : Time elapsed from awakening to contact. Length=K
 
             11. lF : Time elapsed from awakening to the first contact.
+            length=N
         """
         N = len(CCN)
         M = 0

@@ -355,6 +355,7 @@ class Parser(ConfigParser):
             print(self.message)
             print('Checking settings...')
 
+        # output directory
         if not path.isdir(self.p.dir_output):
             print(f"Directory {self.p.dir_output} does not exist")
 
@@ -366,6 +367,20 @@ class Parser(ConfigParser):
                 # directory already exists
                 pass
 
+        # experiment directory
+        ID_dir = self.p.dir_output + self.p.exp_id
+        if not path.isdir(ID_dir):
+            print(f"Directory {ID_dir} does not exist")
+
+            try:
+                makedirs(ID_dir)
+                if self.p.verbose:
+                    print("Directory ", ID_dir,  " Created ")
+            except FileExistsError:
+                # directory already exists
+                pass
+
+        # plots directory
         if not path.isdir(self.p.dir_plots):
             print(f"Directory {self.p.dir_plots} does not exist")
 
@@ -483,7 +498,7 @@ class C3Net():
                 tau_awakeningS = spars['tau_awakening']
                 tau_surviveS = spars['tau_survive']
                 D_maxS = spars['D_max']
-                filenames = spars['filename']
+                # filenames = spars['filename']
             elif isinstance(spars, list):
                 tau_awakeningS = spars[0]
                 tau_surviveS = spars[1]
@@ -503,17 +518,11 @@ class C3Net():
                                    'D_max', 'filename'])
         if isinstance(spars, pd.DataFrame):
             if p.verbose:
-                print('parameters dataframe deteted')
-            params = []
-            prd = itertools.product(tau_awakeningS, tau_surviveS, D_maxS,
-                                    filenames)
-            for i in prd:
-                params.append(i)
-
-            j = 0
-            for pp in params:
-                (tau_awakening, tau_survive, D_max, filename) = pp
-                df.loc[j] = [tau_awakening, tau_survive, D_max, filename]
+                print('parameters dataframe detected')
+            df['tau_awakening'] = spars['tau_awakening']
+            df['tau_survive'] = spars['tau_survive']
+            df['D_max'] = spars['D_max']
+            df['filename'] = spars['filename']
         elif isinstance(spars, list):
             if p.verbose:
                 print('parameters list deteted')
@@ -722,8 +731,6 @@ class C3Net():
         """
         from os import makedirs, path
 
-        print('USING RUN SUITE')
-
         p = self.config.p
         params = self.params.values.tolist()
 
@@ -749,7 +756,7 @@ class C3Net():
                 print("Directory ", dirName, " already exists")
 
         if p.showp:
-            bf1 = "{desc}: {percentage:.4f}%|"
+            bf1 = "{desc}: {percentage:.4f}% | "
             bf2 = "{n_fmt}/{total_fmt} ({elapsed}/{remaining})"
             bf = ''.join([bf1, bf2])
             iterator = tqdm(params, bar_format=bf)
@@ -793,9 +800,9 @@ class C3Net():
 
         Parameters
         ----------
-        p (configuration object): configuration
-        pars (list): list of (3) parameters:
-        tau_A, tau_S and D_max
+        p (configuration object) : configuration object
+        pars (list) : list of (3) parameters:
+            tau_A, tau_S and D_max
 
         Raises
         ------
@@ -803,7 +810,7 @@ class C3Net():
 
         Returns
         -------
-        MPL: dict
+        MPL : dict
 
            (ID of CCN,
             ID of CCN (repeated),
@@ -811,7 +818,6 @@ class C3Net():
             y,
             time of A event,
             time of D event)
-
         Moreover, if there are contacts:
            (ID of receiving CCN,
             ID of emiting CCN,
@@ -1116,14 +1122,14 @@ class Results(C3Net):
             01. N : Total number of CCNs in the full period. Length=1
 
             02. M : Total number of contacts (i.e., CCNs that are on the
-                    space-time cone of another CCN.)
+            space-time cone of another CCN.)
 
             03. K : Total number of CCNs that make at least one contact
-                    (i.e., CCNs that are on the space-time cone of at least
-                    another CCN.)
+            (i.e., CCNs that are on the space-time cone of at least
+            another CCN.)
 
             04. lP : Time periods for each CCN.  Equivalent to the time span
-                     between the A and D events. Length=N
+            between the A and D events. Length=N
 
             05. lI : Number of contacts each CETI receives. Length=N
 

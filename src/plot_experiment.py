@@ -8,19 +8,29 @@ import matplotlib.cm as cm
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 
-if len(argv) > 1:
-    conf = hearsay.parser(argv[1])
-else:
-    conf = hearsay.parser()
+####################################################
+# Figuras 3 y 4
+####################################################
 
-R = hearsay.results(conf)
+
+if len(argv) > 1:
+    conf = hearsay.Parser(argv[1])
+else:
+    conf = hearsay.Parser()
+
+G = hearsay.C3Net(conf)
+G.set_parameters()
+R = hearsay.Results(G)
 R.load()  
 
-fn = R.conf.filenames
+
+R.redux_2d()
+
+fn = R.config.filenames
 fname = fn.dir_output + fn.exp_id
 fname1 = fname + '/m1.pk'
 fname2 = fname + '/m2.pk'
-
+ 
 with open(fname1, 'rb') as pickle_file:
    m1 = pickle.load(pickle_file)
 with open(fname2, 'rb') as pickle_file:
@@ -157,6 +167,3 @@ plt.rcParams['figure.figsize'] = [12, 12]
 plt.rcParams['font.monospace'] = 'DejaVu Sans Mono'
 fig.savefig('../plt/plot_M2.png', format='png') 
 
-# PLOT INBOX **********************************************************
-
-res = R.redux_2d()

@@ -2,10 +2,10 @@ from hearsay import hearsay
 from sys import argv
 
 if len(argv) > 1:
-    conf = hearsay.parser(argv[1])
+    conf = hearsay.Parser(argv[1])
 else:
-    conf = hearsay.parser()
+    conf = hearsay.Parser()
 
-G = hearsay.GalacticNetwork(conf)
-
-G.run_experiment(parallel=conf.p.run_parallel)
+G = hearsay.C3Net(conf)
+G.set_parameters()
+G.run()

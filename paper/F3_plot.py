@@ -9,7 +9,7 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 
 ####################################################
-# Figuras 3 y 4
+# Figura 3
 ####################################################
 
 
@@ -166,4 +166,3 @@ plt.rcParams['axes.ymargin'] = 0.05
 plt.rcParams['figure.figsize'] = [12, 12]
 plt.rcParams['font.monospace'] = 'DejaVu Sans Mono'
 fig.savefig('../plt/plot_M2.png', format='png') 
-

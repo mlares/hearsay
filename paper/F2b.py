@@ -1,15 +1,13 @@
 from hearsay import hearsay
 import numpy as np
-from matplotlib import pyplot as plt
 import pandas as pd
 from itertools import product as pp
- 
-from hearsay import hearsay
+from matplotlib import pyplot as plt
 
 # Figura 2a
 
 # (a) Variation of tau_survive for fixed tau_awakening
-#-----------------------------------------------------
+# -----------------------------------------------------
 
 
 # 1) Generate points in the paramter space to sample :::::::::::::::::::
@@ -31,12 +29,11 @@ for k, i in enumerate(z):
     d_max.append(i[2])
     fname.append(f"../out/F2b/{str(k).zfill(5)}_001.pk")
 
-df = pd.DataFrame(list(zip(tau_a, tau_s, d_max, fname)), 
-               columns =['tau_awakening', 'tau_survive', 'D_max',
-               'filename'])
+df = pd.DataFrame(list(zip(tau_a, tau_s, d_max, fname)),
+                  columns=['tau_awakening', 'tau_survive', 'D_max',
+                  'filename'])
 
 df.to_csv('F2b.csv')
- 
 
 # 1) Correr las simulaciones :::::::::::::::::::
 
@@ -50,7 +47,7 @@ G.set_parameters(df)
 G.run()
 
 # 2) Leer las simulaciones :::::::::::::::::::::
- 
+
 dfa = pd.read_csv('F2b.csv')
 config = hearsay.Parser('F2b.ini')
 config.load_config()
@@ -60,8 +57,8 @@ G.set_parameters(dfa)
 R = hearsay.Results(G)
 R.load()
 res = R.redux()
-ib = res['lI'] 
- 
+ib = res['lI']
+
 fig = plt.figure()
 ax = fig.add_subplot()
 for k, inbox in enumerate(ib):
@@ -79,8 +76,3 @@ for k, inbox in enumerate(ib):
 ax.set_xscale('log')
 ax.legend()
 fig.savefig('F2b.png')
-
-
-
-
-

@@ -1215,6 +1215,39 @@ class Results(C3Net):
         """Redux experiment.
 
         Given a set of parameters, returns the global values
+
+        Parameters
+        ----------
+        subset : boolean array
+            Filter to the values in self.params
+
+        Returns
+        -------
+        N : list
+            Total number of nodes for each simulation in self.params
+        M : list
+            Total number of contacts for each simulation in self.params
+            A contact is produced any time a node enters the light
+            cone of another node.
+        K : list
+            Total number of nodes that make at least one contact, for
+            each simulation in self.params.
+        lP : array
+            Time periods from t_A to t_D.
+        lI : array
+            Number of contacts that each node receives.
+        lX : array
+            X position within the Galaxy disc.
+        lY : array
+            Y position within the Galaxy disc.
+        lL : array
+            Distances between contacted nodes.
+        lH : array
+            Duration of each contact.
+        lW : array
+            Time elapsed from awakening to contact.
+        lF : array
+            Time elapsed from awakening to the first contact.
         """
         import pickle
 
@@ -1370,27 +1403,47 @@ class Results(C3Net):
                'count': count})  # distribution of the multiplicity of contacts
 
     def redux_2d(self, show_progress=False):
-        """Reddux experiment.
+        """Reddux experiment to 2D matrices.
 
-        Similar to previous
+        Takes all the experiments in self.params and reduces the data
+        to matrices containing:
+        1) fraction of nodes that make contact in (t_A, t_D)
+        2) fraction of nodes that make contact in t_A
+
+        Parameters
+        ----------
+        show_progress : boolean
+            Show if a progress indicator is shown
+
+        Returns
+        -------
+        m1 : ndarray
+            Matrix containing the fraction of nodes that make contact
+            in (t_A,t_D) as a function of tau_awakening and tau_survive values
+
+        m2 : ndarray
+            Matrix containing the fraction of nodes that make contact
+            in t_A as a function of tau_awakening and tau_survive values
+
+        Notes
+        -----
+        To do: allow to compute any quantity.
         """
         import pickle
         import numpy as np
 
         # parameters
         p = self.config.p
-        tau_awakeningS = np.linspace(p.tau_a_min, p.tau_a_max, p.tau_a_nbins)
-        tau_surviveS = np.linspace(p.tau_s_min, p.tau_s_max, p.tau_s_nbins)
 
-        A = tau_awakeningS
-        S = tau_surviveS
+        A = self.params['tau_awakening']
+        S = self.params['tau_survive']
 
-        N1 = len(tau_awakeningS)
-        N2 = len(tau_surviveS)
-        m1_d1 = np.zeros((N1, N2))
-        m2_d1 = np.zeros((N1, N2))
+        N1 = len(A)
+        N2 = len(S)
+        m1 = np.zeros((N1, N2))
+        m2 = np.zeros((N1, N2))
 
-        l0_d1 = self.params['D_max'] == self.params['D_max'][0]
+        l0 = self.params['D_max'] == self.params['D_max'][0]
 
         toolbar_width = 40
 
@@ -1412,7 +1465,7 @@ class Results(C3Net):
 
                 l2 = abs(self.params['tau_survive']-s) < 1.e-5
 
-                cond = l0_d1 & l1 & l2
+                cond = l0 & l1 & l2
 
                 if len(cond) > 0:
 
@@ -1430,17 +1483,20 @@ class Results(C3Net):
                     # x = D['x']
                     # y = D['y']
 
-                    m1_d1[i][j] = inbox.count(0)/max(len(inbox), 1)
-                    m2_d1[i][j] = firstc.count(0.)/max(len(firstc), 1)
+                    # m1 : fraction of nodes that make contact in (t_A, t_D)
+                    m1[i][j] = inbox.count(0)/max(len(inbox), 1)
+
+                    # m2 : fraction of nodes that make contact at t_A
+                    m2[i][j] = firstc.count(0.)/max(len(firstc), 1)
                 else:
-                    m1_d1[i][j] = 0.
-                    m2_d1[i][j] = 0.
+                    m1[i][j] = 0.
+                    m2[i][j] = 0.
 
             if show_progress:
                 sys.stdout.write("]\n")  # this ends the progress bar
 
-        m1_d1 = np.transpose(m1_d1)
-        m2_d1 = np.transpose(m2_d1)
+        m1 = np.transpose(m1)
+        m2 = np.transpose(m2)
 
         fn = self.config.filenames
         fname = fn.dir_output + fn.exp_id
@@ -1450,10 +1506,10 @@ class Results(C3Net):
         print(fname1)
         print(fname2)
 
-        pickle.dump(m1_d1, open(fname1, 'wb'))
-        pickle.dump(m2_d1, open(fname2, 'wb'))
+        pickle.dump(m1, open(fname1, 'wb'))
+        pickle.dump(m2, open(fname2, 'wb'))
 
-        return((m1_d1, m2_d1))
+        return((m1, m2))
 
     def show_ccns(self, i, interactive=False):
         """Show simulation results.

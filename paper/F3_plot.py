@@ -6,27 +6,33 @@ from matplotlib import pyplot as plt
 from scipy import ndimage
 import matplotlib.cm as cm
 from mpl_toolkits.axes_grid1 import make_axes_locatable
+import pandas as pd
 
 
 ####################################################
 # Figura 3
 ####################################################
 
+#df = pd.read_csv('F2a.csv')
+#config = hearsay.Parser('F2a.ini')
 
 if len(argv) > 1:
-    conf = hearsay.Parser(argv[1])
+    config = hearsay.Parser(argv[1])
+    config.load_config()
+    G = hearsay.C3Net(config)
+    G.set_parameters() 
 else:
+    df = pd.read_csv('../out/KREE_02/params.csv')
+    config = hearsay.Parser('../out/KREE_02/KREE_02.ini')
     conf = hearsay.Parser()
+    G = hearsay.C3Net(config)
+    G.set_parameters(df)  
 
-G = hearsay.C3Net(conf)
-G.set_parameters()
+ 
 R = hearsay.Results(G)
-R.load()  
+R.load()
 
-
-R.redux_2d()
-
-fn = R.config.filenames
+fn = G.config.filenames
 fname = fn.dir_output + fn.exp_id
 fname1 = fname + '/m1.pk'
 fname2 = fname + '/m2.pk'

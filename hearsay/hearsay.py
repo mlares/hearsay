@@ -835,21 +835,24 @@ class C3Net():
 
         Returns
         -------
-        MPL : dict
+        MPL : list
 
-           (ID of CCN,
+        MPL is a list of size the number of nodes in the simulation.
+        Each element of this list contains a list whose first element
+        is: 
+           [ID of CCN,
             ID of CCN (repeated),
-            x,
-            y,
-            time of A event,
-            time of D event)
-        Moreover, if there are contacts:
-           (ID of receiving CCN,
-            ID of emiting CCN,
-            x of emiting CCN,
-            y of emiting CCN,
-            time of C event,
-            time of B event)
+            x coordinate of the position in the Galaxy,
+            y coordinate of the position in the Galaxy,
+            time of the A event,
+            time of the D event]
+        Moreover, if there are contacts with this node:
+           [ID of receiving node,
+            ID of emiting node,
+            x coordinate of the position in the Galaxy of emiting node,
+            y coordinate of the position in the Galaxy of emiting node,
+            time of the C event,
+            time of the B event]
         """
         if p is None:
             p = self.config.p
@@ -1194,6 +1197,11 @@ class Results(C3Net):
 
             firstcontact = 1.e8
 
+            #if k > 0:
+                # t_A = CCN[i][0][4]
+                # t_C = CCN[i][1][4]
+                #firstcontact = CCN[i][1][4] - CCN[i][0][4]
+
             for j in range(1, k):  # traverse contacts
 
                 earlier = CCN[i][j][4] - CCN[i][0][4]
@@ -1437,6 +1445,8 @@ class Results(C3Net):
 
         A = self.params['tau_awakening']
         S = self.params['tau_survive']
+        A = list(set(A))
+        S = list(set(S))
 
         N1 = len(A)
         N2 = len(S)

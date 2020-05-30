@@ -12,9 +12,9 @@ from hearsay import hearsay
 
 # 1) Generate points in the paramter space to sample :::::::::::::::::::
 
-ta = [100, 500, 1000, 2000, 4000, 5000, 10000, 50000]
-ts = [10000]
-td = [40000]
+ta = [100, 500, 1000, 2000, 4000, 5000]
+ts = [40000]
+td = [32615]
 
 z = pp(ta, ts, td)
 
@@ -44,6 +44,18 @@ config = hearsay.Parser('F2a.ini')
 config.load_config()
 G = hearsay.C3Net(config)
 G.set_parameters(df)
+
+print(G.params)
+ok = input('ok?')
+
+print(G.config.p)
+ok = input('ok?')
+
+print(G.config.filenames)
+ok = input('ok?')
+
+
+
 
 G.run()
 
@@ -78,3 +90,5 @@ for k, inbox in enumerate(ib):
 ax.set_xscale('log')
 ax.legend()
 fig.savefig('F2a.png')
+fig.savefig('F2a.pdf')
+plt.close()

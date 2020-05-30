@@ -13,8 +13,8 @@ from matplotlib import pyplot as plt
 # 1) Generate points in the paramter space to sample :::::::::::::::::::
 
 ta = [1000]
-ts = [3000, 4000, 5000, 10000, 50000]
-td = [40000]
+ts = [5000, 10000, 20000, 50000]
+td = [32615]
 
 z = pp(ta, ts, td)
 
@@ -70,9 +70,11 @@ for k, inbox in enumerate(ib):
     yy = np.cumsum(hy)
 
     lbl = (f"A={R.params.iloc[k]['tau_awakening']},"
-           f"D={R.params.iloc[k]['D_max']}")
+           f"S={R.params.iloc[k]['tau_survive']}")
     ax.step(xx, yy, label=lbl)
 
 ax.set_xscale('log')
 ax.legend()
 fig.savefig('F2b.png')
+fig.savefig('F2b.pdf')
+plt.close()

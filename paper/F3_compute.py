@@ -1,17 +1,26 @@
 from hearsay import hearsay
 import pickle
 import pandas as pd
-
+from sys import argv
 
 ####################################################
 # Figura 3
 ####################################################
 
-df = pd.read_csv('F3.csv')
-config = hearsay.Parser('F3.ini')
-config.load_config()
-G = hearsay.C3Net(config)
-G.set_parameters(df)
+if len(argv) > 1:
+    conf = hearsay.Parser(argv[1])
+else:
+    conf = hearsay.Parser()
+
+G = hearsay.C3Net(conf)
+G.set_parameters() 
+
+
+#df = pd.read_csv('F2a.csv')
+#config = hearsay.Parser('F2a.ini')
+#config.load_config()
+#G = hearsay.C3Net(config)
+#G.set_parameters(df)
 
 R = hearsay.Results(G)
 R.load()
@@ -23,7 +32,11 @@ fname = fn.dir_output + fn.exp_id
 fname1 = fname + '/m1.pk'
 fname2 = fname + '/m2.pk'
 
-with open(fname1, 'w') as pickle_file:
-    pickle.dump(m1, pickle_file)
-with open(fname2, 'w') as pickle_file:
-    pickle.dump(m2, pickle_file)
+
+f1 = open(fname1, 'wb')
+pickle.dump(m1, f1)
+f1.close()
+
+f2 = open(fname2, 'wb')
+pickle.dump(m2, f2)
+f2.close()

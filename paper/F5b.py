@@ -9,9 +9,9 @@ from hearsay import hearsay
 # (b) Variation of tau_awakening for fixed tau_survive
 # -----------------------------------------------------
 
-ta = [5000, 10000, 30000, 50000, 70000, 100000, 500000]
-ts = [100000]
-td = [40000]
+ta = [1000, 2000, 5000, 10000, 20000]
+ts = [10000]
+td = [32615]
 
 z = pp(ta, ts, td)
 
@@ -31,6 +31,7 @@ df = pd.DataFrame(list(zip(tau_a, tau_s, d_max, fname)),
                   'filename'])
 
 df.to_csv('F5b.csv')
+df = pd.read_csv('F5b.csv')
 
 conf = hearsay.Parser('F5b.ini')
 conf.load_config()
@@ -43,12 +44,16 @@ R.load()
 res = R.redux()
 FirstContactTimes = res['lH']
 
+minval = 9999.
+maxval = -9999.
+for c1 in FirstContactTimes:
+    imax = max(c1)
+    imin = min(c1) 
+    minval = min(minval, imin)
+    maxval = max(maxval, imax)
+
 fig = plt.figure()
 ax = fig.add_subplot()
-
-mx = 2.e5
-mn = 0
-
 for k, c1 in enumerate(FirstContactTimes):
     if len(c1) == 0:
         continue
@@ -56,15 +61,16 @@ for k, c1 in enumerate(FirstContactTimes):
     imin = min(c1)
     if imax < imin+1.e-4:
         continue
-    breaks = np.linspace(mn, mx, 50)
-    hy, hx = np.histogram(c1, breaks, density=True)
-
-    hx = (breaks[:-1] + breaks[1:])/2
+    breaks = np.linspace(minval, maxval, 50)
+    hy, hx = np.histogram(c1, breaks, density=False)
 
     lbl = (f"A={R.params.iloc[k]['tau_awakening']},"
            f"S={R.params.iloc[k]['tau_survive']}")
-    ax.step(hx, hy, label=lbl)
+    hy = np.append(hy, hy[-1])
+    ax.step(breaks, hy, where='post', label=lbl)
 
 ax.set_yscale('log')
 ax.legend()
 fig.savefig('F5b.png')
+fig.savefig('F5b.pdf')
+plt.close()

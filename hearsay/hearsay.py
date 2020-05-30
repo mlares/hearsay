@@ -1447,6 +1447,11 @@ class Results(C3Net):
         S = self.params['tau_survive']
         A = list(set(A))
         S = list(set(S))
+        A.sort()
+        S.sort()
+
+        print(A)
+        print(S)
 
         N1 = len(A)
         N2 = len(S)

@@ -105,10 +105,10 @@ working directory is ``$working_dir``
 
 7. create a file ``experiment.py`` that contains the following:
 
-   .. code-block::
+.. code-block:: python
 
    conf = hearsay.parser('hearsay_dir/set/experiment.ini')
-   G = hearsay.GalacticNetwork(conf)
+   G = hearsay.C3Net(conf)
    G.set_parameters()
    net = G.run(interactive=True)
    R = hearsay.results(conf)

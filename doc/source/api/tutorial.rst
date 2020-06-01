@@ -7,7 +7,7 @@ Contents of objects
 =======================
 
 
-GalacticNetwork.params
+C3Net.params
 ===========================
 
 A pandas dataframe with the columns:
@@ -19,11 +19,14 @@ A pandas dataframe with the columns:
 
 
 
-GalacticNetwork.config
+C3Net.config
 ===========================
 
-a parser object.  Contains all configuration parameters in
-``GalacticNetwork.config.p``::
+This is a parser object, which is part of the :class:`hearsay.hearsay.Parser`
+method.
+
+Contains all configuration parameters in
+:attr:`hearsay.C3Net.config.p`::
 
    G.config.p
       Out: pars(ghz_inner=20000.0, ghz_outer=60000.0, t_max=2000000.0, 
@@ -35,7 +38,7 @@ a parser object.  Contains all configuration parameters in
       plot_fname='plot', plot_ftype='PNG', fname='../plt/plot_PHLX_02PNG', 
       showp=True, overwrite=False, verbose=True)
 
-``GalacticNetwork.config.filenames``::
+:attr:`hearsay.C3Net.config.filenames`::
 
    G.config.filenames
    pars(exp_id='PHLX_02', dir_plots='../plt/', dir_output='../out/', 
@@ -92,7 +95,7 @@ Now, we use the configuration file to load an experiment setup:
 .. code-block:: python
 
    conf = hearsay.parser('experiment.ini')
-   G = hearsay.GalacticNetwork(conf)
+   G = hearsay.C3Net(conf)
    G.set_parameters()
    net = G.run(interactive=True)
    R = hearsay.results(conf)
